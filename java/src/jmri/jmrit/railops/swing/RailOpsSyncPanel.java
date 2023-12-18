@@ -6,21 +6,18 @@ import jmri.jmrit.operations.rollingstock.cars.CarManager;
 import jmri.jmrit.operations.rollingstock.engines.Engine;
 import jmri.jmrit.operations.rollingstock.engines.EngineManager;
 import jmri.jmrit.operations.setup.Control;
+import jmri.jmrit.railops.config.Auth;
 import jmri.jmrit.railops.config.RailOpsXml;
-import jmri.jmrit.railops.config.Roster;
 import jmri.jmrit.railops.models.CarModel;
 import jmri.jmrit.railops.models.LocomotiveModel;
-import jmri.jmrit.railops.models.ModelCollection;
 import jmri.jmrit.railops.models.roster.BulkUpsertRosterResponse;
 import jmri.jmrit.railops.models.roster.UpsertLocomotiveModel;
 import jmri.jmrit.railops.services.RosterSyncService;
-import jmri.jmrit.railops.config.Auth;
 import jmri.util.swing.JmriPanel;
 import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
 import java.awt.*;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -71,7 +68,7 @@ public class RailOpsSyncPanel extends JmriPanel {
         InstanceManager.getDefault(RailOpsXml.class);
         _rosterSyncService = InstanceManager.getDefault(RosterSyncService.class);
 
-        apiKeyTextField.setText(Auth.getApiKey());
+//        apiKeyTextField.setText(Auth.getApiKey());
 
         int localLocomotiveCount = InstanceManager.getDefault(EngineManager.class).getNumEntries();
         int localCarCount = InstanceManager.getDefault(CarManager.class).getNumEntries();
@@ -80,9 +77,6 @@ public class RailOpsSyncPanel extends JmriPanel {
         localCarCountLabel.setText(Integer.toString(localCarCount));
 
         if (!Auth.getApiKey().isEmpty()) {
-            // this will set the value of the collection combobox
-            loadCollections();
-
             if (jmri.jmrit.railops.config.Roster.getCollectionId() != 0) {
                 refreshRemoteRoster(jmri.jmrit.railops.config.Roster.getCollectionId());
             }
@@ -91,29 +85,20 @@ public class RailOpsSyncPanel extends JmriPanel {
         setSize(new Dimension(Control.panelWidth700, Control.panelHeight300));
         setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
 
-        // Row 1
-        JPanel row1 = new JPanel();
-        row1.setLayout(new BoxLayout(row1, BoxLayout.X_AXIS));
+        if (Auth.getApiKey().isEmpty()) {
+            var configWarningPanel = new JPanel();
+            configWarningPanel.setLayout(new BoxLayout(configWarningPanel, BoxLayout.X_AXIS));
 
-        JPanel apiKeyPanel = new JPanel();
-        apiKeyPanel.setLayout(new GridBagLayout());
-        apiKeyPanel.setBorder(BorderFactory.createTitledBorder("API Key"));
-        apiKeyPanel.add(apiKeyTextField);
-        row1.add(apiKeyPanel);
+            var noApiKeyLabel = new JLabel("API Key must be configured prior to syncing");
+            noApiKeyLabel.setForeground(Color.RED);
+            configWarningPanel.add(noApiKeyLabel);
 
-        JPanel collectionPanel = new JPanel();
-        collectionPanel.setLayout(new GridBagLayout());
-        collectionPanel.setBorder(BorderFactory.createTitledBorder("Collection"));
-        collectionPanel.add(collectionComboBox);
-        row1.add(collectionPanel);
+            configWarningPanel.add(Box.createRigidArea(new Dimension(10, 0)));
+            var openSettingsButton = new JButton("Settings");
+            configWarningPanel.add(openSettingsButton);
 
-        JPanel saveSettingsPanel = new JPanel();
-        saveSettingsPanel.setLayout(new GridBagLayout());
-        saveSettingsPanel.add(saveSettingsButton);
-
-        row1.add(saveSettingsPanel);
-
-        add(row1);
+            add(configWarningPanel);
+        }
 
         // Row 2 - Roster Summary
         JPanel panelCountSummary = new JPanel();
@@ -155,7 +140,7 @@ public class RailOpsSyncPanel extends JmriPanel {
 
     public void buttonActionPerformed(java.awt.event.ActionEvent ae) {
         if (ae.getSource() == saveSettingsButton) {
-            save();
+//            save();
         } else if (ae.getSource() == refreshRemoteButton) {
             try {
                 refreshRemoteRoster(jmri.jmrit.railops.config.Roster.getCollectionId());
@@ -288,55 +273,6 @@ public class RailOpsSyncPanel extends JmriPanel {
 
         log.info("Created {} cars in remote roster", createdCarCount);
         refreshRemoteRoster(jmri.jmrit.railops.config.Roster.getCollectionId()); // TODO: maybe we should just set/add the created count?
-    }
-
-    private void save() {
-        log.debug("saving settings");
-
-        Auth.setApiKey(apiKeyTextField.getText());
-
-        jmri.jmrit.railops.models.ModelCollection selectedCollection = collectionComboBox.getSelectedItem() != null
-            ? (jmri.jmrit.railops.models.ModelCollection) collectionComboBox.getSelectedItem()
-            : null;
-
-        jmri.jmrit.railops.config.Roster.setCollectionId(selectedCollection != null ? Integer.parseInt(selectedCollection.getId()) : -1);
-
-        try {
-            InstanceManager.getDefault(jmri.jmrit.railops.config.RailOpsXml.class).save();
-
-            // re-load collections if API key was changed
-            // TODO: _only_ reload collections when apiKey was saved
-            loadCollections();
-        } catch(IOException e) {
-            log.error("Error writing rrops settings", e);
-        }
-    }
-
-    private void loadCollections() {
-        if (Auth.getApiKey().isEmpty()) {
-            collectionComboBox.setEnabled(false);
-            return;
-        }
-
-        jmri.jmrit.railops.models.ModelCollection selectedCollection = null;
-
-        collectionComboBox.removeAllItems();
-
-        try {
-            List<jmri.jmrit.railops.models.ModelCollection> collections = _rosterSyncService.getCollections();
-            for (ModelCollection collection : collections) {
-                collectionComboBox.addItem(collection);
-                if (collection.getCollectionId() == Roster.getCollectionId()) {
-                    selectedCollection = collection;
-                }
-            }
-
-            if (selectedCollection != null) {
-                collectionComboBox.setSelectedItem(selectedCollection);
-            }
-        } catch (Exception ex) {
-            log.error("Could not get collections from API", ex);
-        }
     }
 
     // Copied from OperationsPanel

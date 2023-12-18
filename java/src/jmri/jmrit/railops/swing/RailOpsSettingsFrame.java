@@ -9,8 +9,12 @@ public class RailOpsSettingsFrame extends JmriJFrame {
     public RailOpsSettingsFrame() {
         super("RailOps Settings");
 
+        setEscapeKeyClosesWindow(true);
+
         var settingsPanel = new RailOpsSettingsPanel();
         setContentPane(settingsPanel);
+        setSize(Control.panelWidth600, Control.panelHeight300);
+        setResizable(false);
     }
 
     @Override
