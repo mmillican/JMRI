@@ -21,6 +21,6 @@ public class RailOpsSettingsFrame extends JmriJFrame {
     public void initComponents() {
         super.initComponents();
 
-        setMinimumSize(new Dimension(Control.panelWidth500, Control.panelHeight500));
+        setMinimumSize(new Dimension(Control.panelWidth500, Control.panelHeight200));
     }
 }

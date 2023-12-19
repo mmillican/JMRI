@@ -20,8 +20,6 @@ public class RailOpsSettingsPanel extends JmriPanel {
     final RosterSyncService _rosterSyncService;
     JButton saveApiKeyButton = new JButton("Save");
     JButton saveCollectionButton = new JButton("Save");
-    JButton closeWindowButton = new JButton("Close");
-
     JTextField apiKeyTextField = new JTextField(25);
 
     JComboBox<jmri.jmrit.railops.models.ModelCollection> collectionComboBox = new JComboBox<>();
@@ -44,21 +42,17 @@ public class RailOpsSettingsPanel extends JmriPanel {
         setMinimumSize(new Dimension(Control.panelWidth500, Control.panelHeight400));
         setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
 
-        if (!Auth.getApiKey().isEmpty()) {
-            var signupMsg = "A RailOps.app account is required to set use this feature.\n\n"
-                    + "1) Visit https://railops.app in your browser and register for an account.\n"
-                    + "2) After your account is created, follow the instructions to create an API key.\n"
-                    + "3) Enter the API key generated into the text box below and click 'Save'.";
+        if (Auth.getApiKey().isEmpty()) {
+            var signupMsg = "<html><b>A RailOps.app account is required to use this feature.</b><br />"
+                    + "<ol>"
+                    + "<li>Visit https://railops.app in your browser and register for an account.</li>"
+                    + "<li>After your account is created, follow the instructions to create an API key.</li>"
+                    + "<li>Enter the API key generated into the text box below and click 'Save'.</li>"
+                    + "</ol></html>";
 
             var accountRequiredPanel = new JPanel();
-            var signupMsgTextArea = new JTextArea(signupMsg, 6, 50);
-            signupMsgTextArea.setEditable(false);
-            signupMsgTextArea.setLineWrap(true);
-            signupMsgTextArea.setWrapStyleWord(true);
-            signupMsgTextArea.setOpaque(false);
-            signupMsgTextArea.setFont(new Font(Font.SANS_SERIF, Font.PLAIN, 12));
-
-            accountRequiredPanel.add(signupMsgTextArea);
+            var signupMessageLabel = new JLabel(signupMsg);
+            accountRequiredPanel.add(signupMessageLabel);
 
             add(accountRequiredPanel);
         }
@@ -84,11 +78,6 @@ public class RailOpsSettingsPanel extends JmriPanel {
         addButtonAction(saveApiKeyButton);
         addButtonAction(saveCollectionButton);
     }
-
-//    @Override
-//    public void initComponents() {
-//        loadCollections();
-//    }
 
     protected void buttonActionPerformed(java.awt.event.ActionEvent ae) {
         if (ae.getSource() == saveApiKeyButton) {
@@ -140,6 +129,8 @@ public class RailOpsSettingsPanel extends JmriPanel {
         if (Auth.getApiKey().isEmpty()) {
             collectionComboBox.setEnabled(false);
             return;
+        } else {
+            collectionComboBox.setEnabled(true);
         }
 
         ModelCollection selectedCollection = null;
@@ -176,13 +167,6 @@ public class RailOpsSettingsPanel extends JmriPanel {
 
         writeSettings();
     }
-
-//    private void closeSettingsWindow() {
-//        if (getTopLevelAncestor() != null) {
-//            getTopLevelAncestor().setVisible(false);
-//        }
-//        dispose();
-//    }
 
     private final static org.slf4j.Logger log = LoggerFactory.getLogger(RailOpsSettingsPanel.class);
 }

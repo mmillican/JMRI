@@ -16,6 +16,7 @@ import jmri.jmrit.railops.services.RosterSyncService;
 import jmri.util.swing.JmriPanel;
 import org.slf4j.LoggerFactory;
 
+import javax.annotation.Nonnull;
 import javax.swing.*;
 import java.awt.*;
 import java.util.ArrayList;
@@ -25,9 +26,7 @@ import java.util.Optional;
 public class RailOpsSyncPanel extends JmriPanel {
     JButton syncToRemoteButton = new JButton("Sync to Remote");
     JButton refreshRemoteButton = new JButton("Refresh Remote");
-    JButton saveSettingsButton = new JButton("Save");
-
-    JTextField apiKeyTextField = new JTextField(25);
+    JButton openSettingsButton = new JButton("Settings");
 
     protected JComboBox<jmri.jmrit.railops.models.ModelCollection> collectionComboBox = new JComboBox<>();
 
@@ -48,6 +47,7 @@ public class RailOpsSyncPanel extends JmriPanel {
         return "RailOps Sync";
     }
 
+    @Nonnull
     @Override
     public List<JMenu> getMenus() {
         var list = new ArrayList<JMenu>();
@@ -75,6 +75,7 @@ public class RailOpsSyncPanel extends JmriPanel {
 
         localLocomotiveCountLabel.setText(Integer.toString(localLocomotiveCount));
         localCarCountLabel.setText(Integer.toString(localCarCount));
+//        localCarCountLabel.set
 
         if (!Auth.getApiKey().isEmpty()) {
             if (jmri.jmrit.railops.config.Roster.getCollectionId() != 0) {
@@ -94,8 +95,9 @@ public class RailOpsSyncPanel extends JmriPanel {
             configWarningPanel.add(noApiKeyLabel);
 
             configWarningPanel.add(Box.createRigidArea(new Dimension(10, 0)));
-            var openSettingsButton = new JButton("Settings");
+
             configWarningPanel.add(openSettingsButton);
+            addButtonAction(openSettingsButton);
 
             add(configWarningPanel);
         }
@@ -133,14 +135,15 @@ public class RailOpsSyncPanel extends JmriPanel {
 
         add(panelActions);
 
-        addButtonAction(saveSettingsButton);
         addButtonAction(refreshRemoteButton);
         addButtonAction(syncToRemoteButton);
     }
 
     public void buttonActionPerformed(java.awt.event.ActionEvent ae) {
-        if (ae.getSource() == saveSettingsButton) {
-//            save();
+        if (ae.getSource() == openSettingsButton) {
+            log.info("show settings");
+            var settingsFrame = new RailOpsSettingsFrame();
+            settingsFrame.setVisible(true);
         } else if (ae.getSource() == refreshRemoteButton) {
             try {
                 refreshRemoteRoster(jmri.jmrit.railops.config.Roster.getCollectionId());
