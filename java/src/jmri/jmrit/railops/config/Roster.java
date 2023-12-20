@@ -21,12 +21,20 @@ public class Roster extends PropertyChangeSupport implements InstanceManagerAuto
     private int collectionId = 0;
     private LocalDateTime lastSyncTime;
 
+    public static final String COLLECTION_ID_PROPERTY_CHANGE = "collectionIdChange"; // NOI18N
+
     public static int getCollectionId() {
         return getDefault().collectionId;
     }
 
     public static void setCollectionId(int id) {
+        int old = getDefault().collectionId;
         getDefault().collectionId = id;
+
+        if (old != id) {
+            log.debug("collection id changed from {} to {}; firing property change", old, id);
+            getDefault().firePropertyChange(COLLECTION_ID_PROPERTY_CHANGE, old, id);
+        }
     }
 
     public static LocalDateTime getLastSyncTime() {

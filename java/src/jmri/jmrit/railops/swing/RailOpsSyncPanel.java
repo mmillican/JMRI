@@ -8,6 +8,7 @@ import jmri.jmrit.operations.rollingstock.engines.EngineManager;
 import jmri.jmrit.operations.setup.Control;
 import jmri.jmrit.railops.config.Auth;
 import jmri.jmrit.railops.config.RailOpsXml;
+import jmri.jmrit.railops.config.Roster;
 import jmri.jmrit.railops.models.CarModel;
 import jmri.jmrit.railops.models.LocomotiveModel;
 import jmri.jmrit.railops.models.roster.BulkUpsertRosterResponse;
@@ -19,11 +20,13 @@ import org.slf4j.LoggerFactory;
 import javax.annotation.Nonnull;
 import javax.swing.*;
 import java.awt.*;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-public class RailOpsSyncPanel extends JmriPanel {
+public class RailOpsSyncPanel extends JmriPanel implements PropertyChangeListener {
     JButton syncToRemoteButton = new JButton("Sync to Remote");
     JButton refreshRemoteButton = new JButton("Refresh Remote");
     JButton openSettingsButton = new JButton("Settings");
@@ -137,6 +140,9 @@ public class RailOpsSyncPanel extends JmriPanel {
 
         addButtonAction(refreshRemoteButton);
         addButtonAction(syncToRemoteButton);
+
+        Auth.getDefault().addPropertyChangeListener(this);
+        Roster.getDefault().addPropertyChangeListener(this);
     }
 
     public void buttonActionPerformed(java.awt.event.ActionEvent ae) {
@@ -278,6 +284,18 @@ public class RailOpsSyncPanel extends JmriPanel {
         refreshRemoteRoster(jmri.jmrit.railops.config.Roster.getCollectionId()); // TODO: maybe we should just set/add the created count?
     }
 
+    @Override
+    public void propertyChange(PropertyChangeEvent evt) {
+        if (evt.getPropertyName().equals(Auth.API_KEY_PROPERTY_CHANGE)) {
+            // TODO: show/hide auth key warning
+        }
+
+        if (evt.getPropertyName().equals(Roster.COLLECTION_ID_PROPERTY_CHANGE)) {
+            log.debug("collection id property change listener fired");
+            refreshRemoteRoster(Roster.getCollectionId());
+        }
+    }
+
     // Copied from OperationsPanel
     protected void addItemToGrid(JPanel p, JComponent c, int x, int y) {
         GridBagConstraints gc = new GridBagConstraints();
@@ -288,5 +306,14 @@ public class RailOpsSyncPanel extends JmriPanel {
         p.add(c, gc);
     }
 
+    @Override
+    public void dispose() {
+        super.dispose();
+
+        Auth.getDefault().removePropertyChangeListener(this);
+        Roster.getDefault().removePropertyChangeListener(this);
+    }
+
     private final static org.slf4j.Logger log = LoggerFactory.getLogger(RailOpsSyncPanel.class);
+
 }
