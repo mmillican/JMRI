@@ -14,12 +14,15 @@ import org.slf4j.LoggerFactory;
 import javax.swing.*;
 import java.awt.*;
 import java.io.IOException;
+import java.net.URI;
 import java.util.List;
 
 public class RailOpsSettingsPanel extends JmriPanel {
     final RosterSyncService _rosterSyncService;
     JButton saveApiKeyButton = new JButton("Save");
     JButton saveCollectionButton = new JButton("Save");
+    JButton openWebsiteButton = new JButton("Signup");
+
     JTextField apiKeyTextField = new JTextField(25);
 
     JComboBox<jmri.jmrit.railops.models.ModelCollection> collectionComboBox = new JComboBox<>();
@@ -38,24 +41,27 @@ public class RailOpsSettingsPanel extends JmriPanel {
 
         loadCollections();
 
-        setSize(new Dimension(Control.panelWidth500, Control.panelHeight400));
-        setMinimumSize(new Dimension(Control.panelWidth500, Control.panelHeight400));
+        setSize(new Dimension(Control.panelWidth500, Control.panelHeight500));
+        setMinimumSize(new Dimension(Control.panelWidth500, Control.panelHeight500));
         setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
 
-        if (Auth.getApiKey().isEmpty()) {
-            var signupMsg = "<html><b>A RailOps.app account is required to use this feature.</b><br />"
-                    + "<ol>"
-                    + "<li>Visit https://railops.app in your browser and register for an account.</li>"
-                    + "<li>After your account is created, follow the instructions to create an API key.</li>"
-                    + "<li>Enter the API key generated into the text box below and click 'Save'.</li>"
-                    + "</ol></html>";
+        var signupMsg = "<html><b>A RailOps account is required to use this feature.</b><br />"
+                + "<ol>"
+                + "<li>Click the button below, or visit https://railops.app and register for an account.</li>"
+                + "<li>After your account is created, follow the instructions to create an API key.</li>"
+                + "<li>Enter the API key generated into the text box below and click 'Save'.</li>"
+                + "</ol></html>";
 
-            var accountRequiredPanel = new JPanel();
-            var signupMessageLabel = new JLabel(signupMsg);
-            accountRequiredPanel.add(signupMessageLabel);
+        var accountMessagePanel = new JPanel();
+        accountMessagePanel.setLayout(new BoxLayout(accountMessagePanel, BoxLayout.Y_AXIS));
+        var signupMessageLabel = new JLabel(signupMsg);
 
-            add(accountRequiredPanel);
-        }
+        accountMessagePanel.add(signupMessageLabel);
+        accountMessagePanel.add(openWebsiteButton);
+        accountMessagePanel.setAlignmentX(Component.CENTER_ALIGNMENT);
+        accountMessagePanel.setBorder(BorderFactory.createEmptyBorder(10, 20, 10, 20));
+        add(accountMessagePanel);
+
 
         var apiKeyPanel = new JPanel();
         apiKeyPanel.setLayout(new GridBagLayout());
@@ -77,6 +83,7 @@ public class RailOpsSettingsPanel extends JmriPanel {
 
         addButtonAction(saveApiKeyButton);
         addButtonAction(saveCollectionButton);
+        addButtonAction(openWebsiteButton);
     }
 
     protected void buttonActionPerformed(java.awt.event.ActionEvent ae) {
@@ -84,6 +91,13 @@ public class RailOpsSettingsPanel extends JmriPanel {
             saveApiKey();
         } else if (ae.getSource() == saveCollectionButton) {
             saveCollection();
+        } else if (ae.getSource() == openWebsiteButton) {
+            var desktop = Desktop.getDesktop();
+            try {
+                desktop.browse(new URI("https://railops.app"));
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
         }
     }
 
@@ -166,6 +180,16 @@ public class RailOpsSettingsPanel extends JmriPanel {
         );
 
         writeSettings();
+    }
+
+    // Copied from OperationsPanel
+    protected void addItemToGrid(JPanel p, JComponent c, int x, int y) {
+        GridBagConstraints gc = new GridBagConstraints();
+        gc.gridx = x;
+        gc.gridy = y;
+        gc.weightx = 100.0;
+        gc.weighty = 100.0;
+        p.add(c, gc);
     }
 
     private final static org.slf4j.Logger log = LoggerFactory.getLogger(RailOpsSettingsPanel.class);
