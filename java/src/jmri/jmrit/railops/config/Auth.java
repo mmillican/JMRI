@@ -5,6 +5,7 @@ import jmri.InstanceManager;
 import jmri.InstanceManagerAutoDefault;
 import jmri.beans.PropertyChangeSupport;
 import jmri.jmrit.operations.setup.AutoSave;
+import org.apiguardian.api.API;
 import org.jdom2.Element;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -17,14 +18,19 @@ public class Auth extends PropertyChangeSupport implements InstanceManagerAutoDe
 
     private String apiKey = NONE;
 
+    public static final String API_KEY_PROPERTY_CHANGE = "apiKeyChange"; // NOI18N
+
     public static String getApiKey() {
         return getDefault().apiKey;
     }
 
     public static void setApiKey(String key) {
+        String old = getDefault().apiKey;
         getDefault().apiKey = key;
 
-        // TODO: handle setting the dirty flags
+        if (!old.equals(key)) {
+            getDefault().firePropertyChange(API_KEY_PROPERTY_CHANGE, old, key);
+        }
     }
 
     public static Element store() {
