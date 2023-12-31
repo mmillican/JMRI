@@ -7,15 +7,12 @@ import jmri.Disposable;
 import jmri.InstanceManager;
 import jmri.InstanceManagerAutoDefault;
 import jmri.InstanceManagerAutoInitialize;
-import jmri.jmrit.railops.models.roster.BulkUpsertRosterResponse;
 import jmri.jmrit.railops.config.Auth;
 import jmri.jmrit.railops.config.RailOpsXml;
 import jmri.jmrit.railops.models.CarModel;
 import jmri.jmrit.railops.models.LocomotiveModel;
 import jmri.jmrit.railops.models.ModelCollection;
-import jmri.jmrit.railops.models.roster.BulkUpsertRosterRequest;
-import jmri.jmrit.railops.models.roster.UpsertCompareMode;
-import jmri.jmrit.railops.models.roster.UpsertLocomotiveModel;
+import jmri.jmrit.railops.models.roster.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -31,7 +28,7 @@ import java.net.http.HttpResponse;
 import java.util.List;
 
 public class RosterSyncService implements InstanceManagerAutoDefault, InstanceManagerAutoInitialize, Disposable {
-    private static String _apiBaseUrl = "http://localhost:5007/";
+    private static String _apiBaseUrl = "https://prod-api.railops.app/"; // http://localhost:5007/";
 
     public RosterSyncService() {
     }
@@ -45,7 +42,8 @@ public class RosterSyncService implements InstanceManagerAutoDefault, InstanceMa
     }
 
     public List<ModelCollection> getCollections() throws URISyntaxException, IOException {
-        URL url = new URI("http://localhost:5007/collections/mine").toURL();
+//        URL url = new URI("http://localhost:5007/collections/mine").toURL();
+        URL url = new URI("https://prod-api.railops.app/collections/mine").toURL();
         HttpURLConnection connection = (HttpURLConnection) url.openConnection();
         connection.setRequestProperty("Accept", "application/json");
         connection.setRequestProperty("ApiKey", Auth.getApiKey());
@@ -130,6 +128,37 @@ public class RosterSyncService implements InstanceManagerAutoDefault, InstanceMa
 
         log.info("Retrieved {} cars from remote roster", cars.size());
         return cars;
+    }
+
+    public jmri.jmrit.railops.models.roster.BulkUpsertRosterResponse upsertCars(int collectionId, List<UpsertCarModel> cars) throws Exception {
+        String absoluteUrl = "%s%s".formatted(_apiBaseUrl, "cars/bulk");
+
+        BulkUpsertRosterRequest<UpsertCarModel> requestModel = new BulkUpsertRosterRequest<>(
+                collectionId,
+                cars,
+                UpsertCompareMode.ReportingMarksAndNumber
+        );
+
+        ObjectMapper mapper = new ObjectMapper();
+        String requestBody = mapper.writeValueAsString(requestModel);
+
+        log.info("... request body :: {}", requestBody);
+
+        HttpClient client = HttpClient.newHttpClient();
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(absoluteUrl))
+                .setHeader("ApiKey", Auth.getApiKey())
+                .setHeader("Accept", "application/json")
+                .setHeader("Content-Type", "application/json")
+                .POST(HttpRequest.BodyPublishers.ofString(requestBody))
+                .build();
+
+        HttpResponse<String> httpResponse = client.send(request, HttpResponse.BodyHandlers.ofString());
+
+        log.info("... POST car response: {} -- {}", httpResponse.statusCode(), httpResponse.body());
+
+        jmri.jmrit.railops.models.roster.BulkUpsertRosterResponse response = mapper.readValue(httpResponse.body(), BulkUpsertRosterResponse.class);
+        return response;
     }
 
     public CarModel createCar(int collectionId, CarModel carModel) throws Exception {

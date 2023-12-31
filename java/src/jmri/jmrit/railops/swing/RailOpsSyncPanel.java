@@ -9,9 +9,8 @@ import jmri.jmrit.operations.setup.Control;
 import jmri.jmrit.railops.config.Auth;
 import jmri.jmrit.railops.config.RailOpsXml;
 import jmri.jmrit.railops.config.Roster;
-import jmri.jmrit.railops.models.CarModel;
-import jmri.jmrit.railops.models.LocomotiveModel;
 import jmri.jmrit.railops.models.roster.BulkUpsertRosterResponse;
+import jmri.jmrit.railops.models.roster.UpsertCarModel;
 import jmri.jmrit.railops.models.roster.UpsertLocomotiveModel;
 import jmri.jmrit.railops.services.RosterSyncService;
 import jmri.util.swing.JmriPanel;
@@ -24,7 +23,6 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
 public class RailOpsSyncPanel extends JmriPanel implements PropertyChangeListener {
     JButton syncToRemoteButton = new JButton("Sync to Remote");
@@ -190,22 +188,9 @@ public class RailOpsSyncPanel extends JmriPanel implements PropertyChangeListene
 
     private void syncLocomotivesToRemote(int collectionId) throws Exception {
         List<Engine> localEngines = InstanceManager.getDefault(EngineManager.class).getList();
-        List<LocomotiveModel> remoteLocomotives = _rosterSyncService.getLocomotives(jmri.jmrit.railops.config.Roster.getCollectionId());
-
-        int createdEngineCount = 0;
 
         List<jmri.jmrit.railops.models.roster.UpsertLocomotiveModel> upsertLocomotives = new ArrayList<>();
-
         for(Engine engine : localEngines) {
-//            Optional<LocomotiveModel> matchingLoco = remoteLocomotives.stream()
-//                    .filter(x -> x.getRoadName().equals(engine.getRoadName()) && x.getRoadNumber().equals(engine.getNumber()))
-//                    .findFirst();
-//
-//            if (matchingLoco.isPresent()) {
-//                log.info("Locomotive {} {} already exists in remote roster; skipping", engine.getRoadName(), engine.getNumber());
-//                continue;
-//            }
-
             var locoModel = new UpsertLocomotiveModel(
                     0,
                     engine.getRoadName().trim(),
@@ -222,9 +207,6 @@ public class RailOpsSyncPanel extends JmriPanel implements PropertyChangeListene
                     engine.getTypeName()
             );
             upsertLocomotives.add(locoModel);
-
-//            _rosterSyncService.createLocomotive(collectionId, locoModel);
-//            createdEngineCount++;
         }
 
         log.info("submitting {} locomotives...", upsertLocomotives.size());
@@ -239,26 +221,13 @@ public class RailOpsSyncPanel extends JmriPanel implements PropertyChangeListene
 
     private void syncCarsToRemote(int collectionId) throws Exception {
         List<Car> localCars = InstanceManager.getDefault(CarManager.class).getList();
-        List<jmri.jmrit.railops.models.CarModel> remoteCars = _rosterSyncService.getCars(jmri.jmrit.railops.config.Roster.getCollectionId());
 
-        int createdCarCount = 0;
-
+        List<jmri.jmrit.railops.models.roster.UpsertCarModel> upsertCars = new ArrayList<>();
         for(Car car : localCars) {
-            Optional<jmri.jmrit.railops.models.CarModel> matchingCar = remoteCars.stream()
-                    .filter(x -> x.getRoadName().equals(car.getRoadName()) && x.getRoadNumber().equals(car.getNumber()))
-                    .findFirst();
-
-            if (matchingCar.isPresent()) {
-                log.info("Car {} {} already exists in remote roster; skipping", car.getRoadName(), car.getNumber());
-                continue;
-            }
-
-            jmri.jmrit.railops.models.CarModel carModel = new CarModel(
+            var carModel = new UpsertCarModel(
                     0,
-                    collectionId,
                     car.getRoadName(),
                     car.getNumber(),
-                    "", // TODO: Set scale from operations settings?
                     null, // TODO: Set acquired date
                     0,
                     0,
@@ -275,13 +244,17 @@ public class RailOpsSyncPanel extends JmriPanel implements PropertyChangeListene
                     car.isHazardous(),
                     car.getColor()
             );
-
-            _rosterSyncService.createCar(collectionId, carModel);
-            createdCarCount++;
+            upsertCars.add(carModel);
         }
 
-        log.info("Created {} cars in remote roster", createdCarCount);
-        refreshRemoteRoster(jmri.jmrit.railops.config.Roster.getCollectionId()); // TODO: maybe we should just set/add the created count?
+        log.info("submitting {} cars...", upsertCars.size());
+
+        BulkUpsertRosterResponse upsertResponse = _rosterSyncService.upsertCars(collectionId, upsertCars);
+
+        log.info("Created {} / Updated {} cars in remote roster",
+                upsertResponse.getCreatedCount(), upsertResponse.getUpdatedCount());
+
+        refreshRemoteRoster(collectionId); // TODO: maybe we should just set/add the created count?
     }
 
     @Override
