@@ -924,7 +924,8 @@ public abstract class AbstractMRTrafficController {
         }
         if (!threadStopRequest) { // if e.g. unexpected end
             ConnectionStatus.instance().setConnectionState(controller.getUserName(), controller.getCurrentPortName(), ConnectionStatus.CONNECTION_DOWN);
-            log.error("Exit from rcv loop in {}", this.getClass());
+            log.debug("Exit from rcv loop in {}", this.getClass());
+            log.info("Exiting receive loop");
             recovery(); // see if you can restart
         }
     }
@@ -968,8 +969,7 @@ public abstract class AbstractMRTrafficController {
     /**
      * Read a single byte, protecting against various timeouts, etc.
      * <p>
-     * When a port is set to have a receive timeout (via the
-     * {@link purejavacomm.SerialPort#enableReceiveTimeout(int)} method), some will return
+     * When a port is set to have a receive timeout, some will return
      * zero bytes or an EOFException at the end of the timeout. In that case, the read
      * should be repeated to get the next real character.
      *
