@@ -79,6 +79,6 @@ public abstract class UpsertRosterItemModel {
 
     @Override
     public String toString() {
-        return "%s %s".formatted(_roadName, _roadNumber);
+        return String.format("%s %s", _roadName, _roadNumber);
     }
 }

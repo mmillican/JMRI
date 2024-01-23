@@ -58,7 +58,7 @@ public class RosterSyncService implements InstanceManagerAutoDefault, InstanceMa
     }
 
     public List<LocomotiveModel> getLocomotives(int collectionId) throws Exception {
-        String url = "locomotives?collectionId=%s".formatted(collectionId);
+        String url = String.format("locomotives?collectionId=%s", collectionId);
         List<LocomotiveModel> locomotives = GetList(url, LocomotiveModel.class);
 
         log.info("Retrieved {} locomotives from remote roster", locomotives.size());
@@ -66,7 +66,7 @@ public class RosterSyncService implements InstanceManagerAutoDefault, InstanceMa
     }
 
     public jmri.jmrit.railops.models.roster.BulkUpsertRosterResponse upsertLocomotives(int collectionId, List<UpsertLocomotiveModel> locomotives) throws Exception {
-        String absoluteUrl = "%s%s".formatted(_apiBaseUrl, "locomotives/bulk");
+        String absoluteUrl = String.format("%s%s", _apiBaseUrl, "locomotives/bulk");
 
         BulkUpsertRosterRequest<UpsertLocomotiveModel> requestModel = new BulkUpsertRosterRequest<>(
                 collectionId,
@@ -97,8 +97,8 @@ public class RosterSyncService implements InstanceManagerAutoDefault, InstanceMa
     }
 
     public LocomotiveModel createLocomotive(int collectionId, LocomotiveModel locomotiveModel) throws Exception {
-        String url = "collections/%s/locomotives".formatted(collectionId);
-        String absoluteUrl = "%s%s".formatted(_apiBaseUrl, url);
+        String url = String.format("collections/%s/locomotives", collectionId);
+        String absoluteUrl = String.format("%s%s", _apiBaseUrl, url);
 
         ObjectMapper mapper = new ObjectMapper();
         String requestBody = mapper.writeValueAsString(locomotiveModel);
@@ -123,7 +123,7 @@ public class RosterSyncService implements InstanceManagerAutoDefault, InstanceMa
     }
 
     public List<CarModel> getCars(int collectionId) throws Exception {
-        String url = "cars?collectionId=%s".formatted(collectionId);
+        String url = String.format("cars?collectionId=%s", collectionId);
         List<CarModel> cars = GetList(url, CarModel.class);
 
         log.info("Retrieved {} cars from remote roster", cars.size());
@@ -131,7 +131,7 @@ public class RosterSyncService implements InstanceManagerAutoDefault, InstanceMa
     }
 
     public jmri.jmrit.railops.models.roster.BulkUpsertRosterResponse upsertCars(int collectionId, List<UpsertCarModel> cars) throws Exception {
-        String absoluteUrl = "%s%s".formatted(_apiBaseUrl, "cars/bulk");
+        String absoluteUrl = String.format("%s%s", _apiBaseUrl, "cars/bulk");
 
         BulkUpsertRosterRequest<UpsertCarModel> requestModel = new BulkUpsertRosterRequest<>(
                 collectionId,
@@ -162,8 +162,8 @@ public class RosterSyncService implements InstanceManagerAutoDefault, InstanceMa
     }
 
     public CarModel createCar(int collectionId, CarModel carModel) throws Exception {
-        String url = "collections/%s/cars".formatted(collectionId);
-        String absoluteUrl = "%s%s".formatted(_apiBaseUrl, url);
+        String url = String.format("collections/%s/cars", collectionId);
+        String absoluteUrl = String.format("%s%s", _apiBaseUrl, url);
 
         ObjectMapper mapper = new ObjectMapper();
         String requestBody = mapper.writeValueAsString(carModel);
@@ -190,7 +190,7 @@ public class RosterSyncService implements InstanceManagerAutoDefault, InstanceMa
     private <TResponseType> List<TResponseType> GetList(String url, Class<TResponseType> responseTypeClass) throws Exception {
         log.info("Submitting GET request to '{}' (API Key: {})", url, Auth.getApiKey());
 
-        String absoluteUrl = "%s%s".formatted(_apiBaseUrl, url);
+        String absoluteUrl = String.format("%s%s", _apiBaseUrl, url);
 
         ObjectMapper mapper = new ObjectMapper();
 
@@ -228,7 +228,7 @@ public class RosterSyncService implements InstanceManagerAutoDefault, InstanceMa
     private <TRequestType, TResponseType> TResponseType Post(String url, TRequestType requestModel) throws Exception {
         log.info("Submitting POST request to '{}' (API Key: {})", url, Auth.getApiKey());
 
-        String absoluteUrl = "%s%s".formatted(_apiBaseUrl, url);
+        String absoluteUrl = String.format("%s%s", _apiBaseUrl, url);
 
         ObjectMapper mapper = new ObjectMapper();
         String requestBody = mapper.writeValueAsString(requestModel);
