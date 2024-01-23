@@ -551,6 +551,7 @@
             <fileset file="log.txt"/>
             <fileset file="${jartarget}/jmri.jar"/>
             <fileset file="${jartarget}/jmri-tests.jar"/>
+            <fileset file="${jartarget}/railops.jar"/>
             <fileset file="${javadir}/manifest"/>
             <!-- .gitignore test artifacts -->
             <fileset file="junit-results.xml"/>
@@ -1994,6 +1995,34 @@
             </section>
           </manifest>
         </jar>
+    </target>
+
+    <!--  Special thanks to Bob Jacobsen for helping with this  -->
+    <target name="jar-railops"
+            description="create a Rail-Ops specific jar for separate distribution"
+            depends="debug">
+      <manifestclasspath property="jar.classpath" jarfile="${jartarget}/railops.jar">
+        <classpath refid="jar.class.path" />
+      </manifestclasspath>
+      <jar jarfile="${jartarget}/railops.jar"
+           basedir="${target}"
+           compress="true"
+           index="true"
+           includes="META-INF/services/jmri.util.startup.StartupActionFactory,
+                         META-INF/services/jmri.jmrit.swing.ToolsMenuAction,
+                         jmri/jmrit/railops/**
+                      ">
+        <manifest>
+          <section name="jmri">
+            <attribute name="Specification-Title" value="RailOps Classes"/>
+            <attribute name="Specification-Version" value="1.0.0"/>
+            <attribute name="Specification-Vendor" value="InternetMill LLC / Matt Millican"/>
+            <attribute name="Package-Title" value="railops"/>
+            <attribute name="Package-Version" value="1.0.0"/>
+            <attribute name="Package-Vendor" value="InternetMill LLC / Matt Millican"/>
+          </section>
+        </manifest>
+      </jar>
     </target>
 
     <target name="native-image" depends="jar" description="create native launchers">
