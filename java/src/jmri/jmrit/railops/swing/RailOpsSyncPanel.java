@@ -13,6 +13,7 @@ import jmri.jmrit.railops.models.roster.BulkUpsertRosterResponse;
 import jmri.jmrit.railops.models.roster.UpsertCarModel;
 import jmri.jmrit.railops.models.roster.UpsertLocomotiveModel;
 import jmri.jmrit.railops.services.RosterSyncService;
+import jmri.util.swing.JmriJOptionPane;
 import jmri.util.swing.JmriPanel;
 import org.slf4j.LoggerFactory;
 
@@ -26,7 +27,7 @@ import java.util.List;
 
 public class RailOpsSyncPanel extends JmriPanel implements PropertyChangeListener {
     JButton syncToRemoteButton = new JButton("Sync to Remote");
-    JButton refreshRemoteButton = new JButton("Refresh Remote");
+    JButton refreshRemoteButton = new JButton("Refresh Remote Counts");
     JButton openSettingsButton = new JButton("Settings");
 
     protected JComboBox<jmri.jmrit.railops.models.ModelCollection> collectionComboBox = new JComboBox<>();
@@ -155,16 +156,7 @@ public class RailOpsSyncPanel extends JmriPanel implements PropertyChangeListene
                 log.error("Error triggering refreshRemoteButton action", ex);
             }
         } else if (ae.getSource() == syncToRemoteButton) {
-            try {
-                syncLocomotivesToRemote(jmri.jmrit.railops.config.Roster.getCollectionId());
-            } catch (Exception ex) {
-                log.error("Error syncing locomotives", ex);
-            }
-            try {
-                syncCarsToRemote(jmri.jmrit.railops.config.Roster.getCollectionId());
-            } catch (Exception ex) {
-                log.error("Error syncing cars", ex);
-            }
+            syncRosterToRemote();
         }
     }
 
@@ -184,6 +176,46 @@ public class RailOpsSyncPanel extends JmriPanel implements PropertyChangeListene
         } catch (Exception ex) {
             log.error("Error refreshing remote roster", ex);
         }
+    }
+
+    private void syncRosterToRemote() {
+        syncToRemoteButton.setEnabled(false);
+        setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+
+        try {
+            try {
+                syncLocomotivesToRemote(jmri.jmrit.railops.config.Roster.getCollectionId());
+            } catch (Exception ex) {
+                log.error("Error syncing locomotives", ex);
+                throw ex;
+            }
+
+            try {
+                syncCarsToRemote(jmri.jmrit.railops.config.Roster.getCollectionId());
+            } catch (Exception ex) {
+                log.error("Error syncing cars", ex);
+                throw ex;
+            }
+
+            JmriJOptionPane.showMessageDialogNonModal(
+                    this,
+                    "Your locomotive and car roster has been synced to RailOps",
+                    "Sync Complete",
+                    JmriJOptionPane.INFORMATION_MESSAGE,
+                    null
+            );
+        } catch (Exception ex) {
+            JmriJOptionPane.showMessageDialogNonModal(
+                    this,
+                    "There was an error syncing your roster. Try again, or check the logs for more information.",
+                    "Error syncing roster",
+                    JmriJOptionPane.ERROR_MESSAGE,
+                    null
+            );
+        }
+
+        setCursor(Cursor.getDefaultCursor());
+        syncToRemoteButton.setEnabled(true);
     }
 
     private void syncLocomotivesToRemote(int collectionId) throws Exception {
