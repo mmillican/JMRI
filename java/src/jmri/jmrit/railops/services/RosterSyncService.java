@@ -183,8 +183,7 @@ public class RosterSyncService implements InstanceManagerAutoDefault, InstanceMa
 
         log.debug("... POST car response: {} -- {}", httpResponse.statusCode(), httpResponse.body());
 
-        CarModel response = mapper.readValue(httpResponse.body(), CarModel.class);
-        return response;
+        return mapper.readValue(httpResponse.body(), CarModel.class);
     }
 
     private <TResponseType> List<TResponseType> GetList(String url, Class<TResponseType> responseTypeClass) throws Exception {
@@ -202,27 +201,11 @@ public class RosterSyncService implements InstanceManagerAutoDefault, InstanceMa
         connection.setRequestMethod("GET");
         InputStream responseStream = connection.getInputStream();
 
-//        HttpClient client = HttpClient.newHttpClient();
-//        HttpRequest request = HttpRequest.newBuilder()
-//                .uri(URI.create(absoluteUrl))
-//                .setHeader("ApiKey", Auth.getApiKey())
-//                .setHeader("Accept", "application/json")
-//                .GET()
-//                .build();
-//
-//        log.info("... HTTP Request >>> {}", request);
-//
-//        HttpResponse<String> httpResponse = client.send(request, HttpResponse.BodyHandlers.ofString());
-//
-//        log.info("... response {}: {}", httpResponse.statusCode(), httpResponse.body());
-
         // TODO: Need to figure out how to make the response handling / deserialization dynamic per type
         // TODO: After the above, see if we can go back to the 'other' method of making the requests
 
         CollectionType collectionType = mapper.getTypeFactory().constructCollectionType(List.class, responseTypeClass);
-//        TResponseType response = mapper.readValue(responseStream., new TypeReference<>() {});
-        List<TResponseType> response = mapper.readValue(responseStream, collectionType);
-        return response;
+        return mapper.readValue(responseStream, collectionType);
     }
 
     private <TRequestType, TResponseType> TResponseType Post(String url, TRequestType requestModel) throws Exception {
@@ -248,23 +231,8 @@ public class RosterSyncService implements InstanceManagerAutoDefault, InstanceMa
 
         log.info("POST request response: {} -- {}", httpResponse.statusCode(), httpResponse.body());
         TypeReference<TResponseType> responseTypeRef = new TypeReference<TResponseType>() { };
-        TResponseType response = mapper.readValue(httpResponse.body(), responseTypeRef);
-        return response;
-//        TResponseType response = mapper.readValue(httpResponse.body(), new TypeReference<>() {});
-//        return response;
+        return mapper.readValue(httpResponse.body(), responseTypeRef);
     }
-
-//    private static <TResponseType> TResponseType MakeRequest(String url, String method, Object body) throws Exception {
-//        URL requestUrl = new URI(_apiBaseUrl + "/" + url).toURL();
-//
-//        log.info("Submitting {} request to '{}'", method, url);
-//
-//        HttpURLConnection conn = (HttpURLConnection) requestUrl.openConnection();
-//        conn.setRequestProperty("Accept", "application/json");
-//        conn.setRequestProperty("ApiKey", Auth.getApiKey()); // TODO: Make sure the auth key is loaded
-//        conn.setRequestMethod(method);
-//
-//    }
 
     private static final Logger log = LoggerFactory.getLogger(RosterSyncService.class);
 
