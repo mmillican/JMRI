@@ -187,13 +187,13 @@ public class RosterSyncService implements InstanceManagerAutoDefault, InstanceMa
     }
 
     private <TResponseType> List<TResponseType> GetList(String url, Class<TResponseType> responseTypeClass) throws Exception {
-        log.info("Submitting GET request to '{}' (API Key: {})", url, Auth.getApiKey());
+        log.info("Submitting GET request to '{}'", url);
 
         String absoluteUrl = String.format("%s%s", _apiBaseUrl, url);
 
         ObjectMapper mapper = new ObjectMapper();
 
-        log.info("requesting locos from '{}' (api key: {})", absoluteUrl, Auth.getApiKey());
+        log.info("requesting locos from '{}'", absoluteUrl);
         URL requestUrl = new URI(absoluteUrl).toURL();
         HttpURLConnection connection = (HttpURLConnection) requestUrl.openConnection();
         connection.setRequestProperty("Accept", "application/json");
@@ -209,7 +209,7 @@ public class RosterSyncService implements InstanceManagerAutoDefault, InstanceMa
     }
 
     private <TRequestType, TResponseType> TResponseType Post(String url, TRequestType requestModel) throws Exception {
-        log.info("Submitting POST request to '{}' (API Key: {})", url, Auth.getApiKey());
+        log.info("Submitting POST request to '{}'", url);
 
         String absoluteUrl = String.format("%s%s", _apiBaseUrl, url);
 
