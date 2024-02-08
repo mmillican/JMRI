@@ -77,7 +77,7 @@ public class RosterSyncService implements InstanceManagerAutoDefault, InstanceMa
         ObjectMapper mapper = new ObjectMapper();
         String requestBody = mapper.writeValueAsString(requestModel);
 
-        log.info("... request body :: {}", requestBody);
+        log.debug("... request body :: {}", requestBody);
 
         HttpClient client = HttpClient.newHttpClient();
         HttpRequest request = HttpRequest.newBuilder()
@@ -90,7 +90,7 @@ public class RosterSyncService implements InstanceManagerAutoDefault, InstanceMa
 
         HttpResponse<String> httpResponse = client.send(request, HttpResponse.BodyHandlers.ofString());
 
-        log.info("... POST locomotive response: {} -- {}", httpResponse.statusCode(), httpResponse.body());
+        log.debug("... POST locomotive response: {} -- {}", httpResponse.statusCode(), httpResponse.body());
 
         jmri.jmrit.railops.models.roster.BulkUpsertRosterResponse response = mapper.readValue(httpResponse.body(), BulkUpsertRosterResponse.class);
         return response;
@@ -142,7 +142,7 @@ public class RosterSyncService implements InstanceManagerAutoDefault, InstanceMa
         ObjectMapper mapper = new ObjectMapper();
         String requestBody = mapper.writeValueAsString(requestModel);
 
-        log.info("... request body :: {}", requestBody);
+        log.debug("... request body :: {}", requestBody);
 
         HttpClient client = HttpClient.newHttpClient();
         HttpRequest request = HttpRequest.newBuilder()
@@ -155,7 +155,7 @@ public class RosterSyncService implements InstanceManagerAutoDefault, InstanceMa
 
         HttpResponse<String> httpResponse = client.send(request, HttpResponse.BodyHandlers.ofString());
 
-        log.info("... POST car response: {} -- {}", httpResponse.statusCode(), httpResponse.body());
+        log.debug("... POST car response: {} -- {}", httpResponse.statusCode(), httpResponse.body());
 
         jmri.jmrit.railops.models.roster.BulkUpsertRosterResponse response = mapper.readValue(httpResponse.body(), BulkUpsertRosterResponse.class);
         return response;
@@ -187,13 +187,13 @@ public class RosterSyncService implements InstanceManagerAutoDefault, InstanceMa
     }
 
     private <TResponseType> List<TResponseType> GetList(String url, Class<TResponseType> responseTypeClass) throws Exception {
-        log.info("Submitting GET request to '{}'", url);
+        log.debug("Submitting GET request to '{}'", url);
 
         String absoluteUrl = String.format("%s%s", _apiBaseUrl, url);
 
         ObjectMapper mapper = new ObjectMapper();
 
-        log.info("requesting locos from '{}'", absoluteUrl);
+        log.debug("requesting locos from '{}'", absoluteUrl);
         URL requestUrl = new URI(absoluteUrl).toURL();
         HttpURLConnection connection = (HttpURLConnection) requestUrl.openConnection();
         connection.setRequestProperty("Accept", "application/json");
@@ -209,14 +209,14 @@ public class RosterSyncService implements InstanceManagerAutoDefault, InstanceMa
     }
 
     private <TRequestType, TResponseType> TResponseType Post(String url, TRequestType requestModel) throws Exception {
-        log.info("Submitting POST request to '{}'", url);
+        log.debug("Submitting POST request to '{}'", url);
 
         String absoluteUrl = String.format("%s%s", _apiBaseUrl, url);
 
         ObjectMapper mapper = new ObjectMapper();
         String requestBody = mapper.writeValueAsString(requestModel);
 
-        log.info("... request body :: {}", requestBody);
+        log.debug("... request body :: {}", requestBody);
 
         HttpClient client = HttpClient.newHttpClient();
         HttpRequest request = HttpRequest.newBuilder()
@@ -229,7 +229,7 @@ public class RosterSyncService implements InstanceManagerAutoDefault, InstanceMa
 
         HttpResponse<String> httpResponse = client.send(request, HttpResponse.BodyHandlers.ofString());
 
-        log.info("POST request response: {} -- {}", httpResponse.statusCode(), httpResponse.body());
+        log.debug("POST request response: {} -- {}", httpResponse.statusCode(), httpResponse.body());
         TypeReference<TResponseType> responseTypeRef = new TypeReference<TResponseType>() { };
         return mapper.readValue(httpResponse.body(), responseTypeRef);
     }
