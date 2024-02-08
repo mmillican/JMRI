@@ -219,10 +219,28 @@ public class RailOpsSyncPanel extends JmriPanel implements PropertyChangeListene
     }
 
     private void syncLocomotivesToRemote(int collectionId) throws Exception {
-        List<Engine> localEngines = InstanceManager.getDefault(EngineManager.class).getList();
+        List<Engine> localOpsEngines = InstanceManager.getDefault(EngineManager.class).getList();
+        var dcProEngines = jmri.jmrit.roster.Roster.getDefault().getEntriesMatchingCriteria(null, null, null, null, null, null,
+                null, null, null, null, null);
+
+        log.info("Retrieved {} engines from DecoderPro", dcProEngines.size());
 
         List<jmri.jmrit.railops.models.roster.UpsertLocomotiveModel> upsertLocomotives = new ArrayList<>();
-        for(Engine engine : localEngines) {
+        for(Engine engine : localOpsEngines) {
+            String engineIdentifier = String.format("%s %s", engine.getRoadName(), engine.getNumber());
+            log.debug("Mapping engine '{}'", engineIdentifier);
+
+            var decoderEngine = dcProEngines.stream()
+                    .filter(x -> x.getId().equals(engineIdentifier))
+                    .findFirst()
+                    .orElse(null);
+
+            if (decoderEngine != null) {
+                log.debug("matching decoder pro engine: {} (mfg: {})", decoderEngine.getId(), decoderEngine.getMfg());
+            } else {
+                log.debug("matching decoder pro engine NOT found {}", engine.getId());
+            }
+
             var locoModel = new UpsertLocomotiveModel(
                     0,
                     engine.getRoadName().trim(),
@@ -231,7 +249,7 @@ public class RailOpsSyncPanel extends JmriPanel implements PropertyChangeListene
                     0,
                     0,
                     engine.getLengthInteger(),
-                    "",
+                    decoderEngine != null ? decoderEngine.getMfg() : null,
                     engine.getAdjustedWeightTons(),
                     engine.getOwnerName(),
                     engine.getComment(),
