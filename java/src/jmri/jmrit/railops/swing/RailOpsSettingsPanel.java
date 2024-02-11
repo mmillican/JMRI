@@ -22,8 +22,7 @@ public class RailOpsSettingsPanel extends JmriPanel {
     final RailOpsXml _railOpsConfig;
     final RosterSyncService _rosterSyncService;
 
-    JPanel _apiUrlWarningPanel = new JPanel();
-    JLabel _apiUrlWarningLabel = new JLabel();
+    private final ApiUrlWarning _apiUrlWarning;
 
     JButton saveApiSettingsButton = new JButton("Save");
     JButton resetApiUrlButton = new JButton("Reset URL");
@@ -67,13 +66,8 @@ public class RailOpsSettingsPanel extends JmriPanel {
         accountMessagePanel.setLayout(new BoxLayout(accountMessagePanel, BoxLayout.Y_AXIS));
         var signupMessageLabel = new JLabel(signupMsg);
 
-        _apiUrlWarningLabel = new JLabel();
-        _apiUrlWarningLabel.setForeground(Color.red);
-        _apiUrlWarningPanel.add(_apiUrlWarningLabel);
-        _apiUrlWarningPanel.setBorder(BorderFactory.createEmptyBorder(10, 0, 10, 0));
-
-        add(_apiUrlWarningPanel);
-        setApiWarningLabel();
+        _apiUrlWarning = new ApiUrlWarning();
+        add(_apiUrlWarning);
 
         accountMessagePanel.add(signupMessageLabel);
         accountMessagePanel.add(openWebsiteButton);
@@ -153,11 +147,6 @@ public class RailOpsSettingsPanel extends JmriPanel {
         }
     }
 
-    private void setApiWarningLabel() {
-        _apiUrlWarningLabel.setText(String.format("WARNING: API URL is set to %s", ApiSettings.getApiUrl()));
-        _apiUrlWarningPanel.setVisible(ApiSettings.isNonDefaultApiUrl());
-    }
-
     private void saveApiSettings() {
         log.debug("saving api settings");
 
@@ -165,7 +154,7 @@ public class RailOpsSettingsPanel extends JmriPanel {
         ApiSettings.setApiKey(apiKeyTextField.getText());
 
         writeSettings();
-        setApiWarningLabel();
+        _apiUrlWarning.refresh();
         loadCollections(); // reload the collections after API key has been saved
     }
 

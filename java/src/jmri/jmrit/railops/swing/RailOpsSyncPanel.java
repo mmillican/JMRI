@@ -26,6 +26,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class RailOpsSyncPanel extends JmriPanel implements PropertyChangeListener {
+    private final ApiUrlWarning _apiUrlWarning;
+
     JButton syncToRemoteButton = new JButton("Sync to Remote");
     JButton refreshRemoteButton = new JButton("Refresh Remote Counts");
     JButton openSettingsButton = new JButton("Settings");
@@ -70,6 +72,8 @@ public class RailOpsSyncPanel extends JmriPanel implements PropertyChangeListene
         InstanceManager.getDefault(RailOpsXml.class);
         _rosterSyncService = InstanceManager.getDefault(RosterSyncService.class);
 
+        _apiUrlWarning = new ApiUrlWarning();
+        add(_apiUrlWarning);
 //        apiKeyTextField.setText(Auth.getApiKey());
 
         int localLocomotiveCount = InstanceManager.getDefault(EngineManager.class).getNumEntries();
@@ -313,8 +317,11 @@ public class RailOpsSyncPanel extends JmriPanel implements PropertyChangeListene
             // TODO: show/hide auth key warning
         }
 
-        if (evt.getPropertyName().equals(Roster.COLLECTION_ID_PROPERTY_CHANGE)) {
-            log.debug("collection id property change listener fired");
+        if (evt.getPropertyName().equals(Roster.COLLECTION_ID_PROPERTY_CHANGE)
+            || evt.getPropertyName().equals(ApiSettings.API_URL_PROPERTY_CHANGE)) {
+
+            log.debug("{} property change event fired; updating collection info", evt.getPropertyName());
+            _apiUrlWarning.refresh();
             refreshRemoteRoster(Roster.getCollectionId());
         }
     }
