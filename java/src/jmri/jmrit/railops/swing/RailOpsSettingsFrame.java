@@ -13,7 +13,7 @@ public class RailOpsSettingsFrame extends JmriJFrame {
 
         var settingsPanel = new RailOpsSettingsPanel();
         setContentPane(settingsPanel);
-        setSize(Control.panelWidth600, Control.panelHeight300);
+        setSize(Control.panelWidth600, Control.panelHeight500);
         setResizable(false);
     }
 
@@ -21,6 +21,6 @@ public class RailOpsSettingsFrame extends JmriJFrame {
     public void initComponents() {
         super.initComponents();
 
-        setMinimumSize(new Dimension(Control.panelWidth500, Control.panelHeight200));
+        setMinimumSize(new Dimension(Control.panelWidth500, Control.panelHeight500));
     }
 }

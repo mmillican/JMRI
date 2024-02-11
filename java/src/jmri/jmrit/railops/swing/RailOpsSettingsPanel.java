@@ -13,17 +13,26 @@ import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ActionEvent;
 import java.io.IOException;
 import java.net.URI;
 import java.util.List;
 
 public class RailOpsSettingsPanel extends JmriPanel {
+    final RailOpsXml _railOpsConfig;
     final RosterSyncService _rosterSyncService;
-    JButton saveApiKeyButton = new JButton("Save");
+
+    JPanel _apiUrlWarningPanel = new JPanel();
+    JLabel _apiUrlWarningLabel = new JLabel();
+
+    JButton saveApiSettingsButton = new JButton("Save");
+    JButton resetApiUrlButton = new JButton("Reset URL");
     JButton saveCollectionButton = new JButton("Save");
     JButton openWebsiteButton = new JButton("Signup");
 
     JTextField apiKeyTextField = new JTextField(25);
+
+    JTextField apiUrlTextField = new JTextField(25);
 
     JComboBox<jmri.jmrit.railops.models.ModelCollection> collectionComboBox = new JComboBox<>();
 
@@ -35,14 +44,16 @@ public class RailOpsSettingsPanel extends JmriPanel {
     public RailOpsSettingsPanel() {
         super();
 
-        InstanceManager.getDefault(RailOpsXml.class);
+        _railOpsConfig = InstanceManager.getDefault(RailOpsXml.class);
         _rosterSyncService = InstanceManager.getDefault(RosterSyncService.class);
+
+        apiUrlTextField.setText(_railOpsConfig.getApiUrl());
         apiKeyTextField.setText(Auth.getApiKey());
 
         loadCollections();
 
-        setSize(new Dimension(Control.panelWidth500, Control.panelHeight500));
-        setMinimumSize(new Dimension(Control.panelWidth500, Control.panelHeight500));
+        setSize(new Dimension(Control.panelWidth500, Control.panelHeight600));
+        setMinimumSize(new Dimension(Control.panelWidth500, Control.panelHeight600));
         setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
 
         var signupMsg = "<html><b>A RailOps account is required to use this feature.</b><br />"
@@ -56,21 +67,38 @@ public class RailOpsSettingsPanel extends JmriPanel {
         accountMessagePanel.setLayout(new BoxLayout(accountMessagePanel, BoxLayout.Y_AXIS));
         var signupMessageLabel = new JLabel(signupMsg);
 
+        _apiUrlWarningLabel = new JLabel();
+        _apiUrlWarningLabel.setForeground(Color.red);
+        _apiUrlWarningPanel.add(_apiUrlWarningLabel);
+        _apiUrlWarningPanel.setBorder(BorderFactory.createEmptyBorder(10, 0, 10, 0));
+
+        add(_apiUrlWarningPanel);
+        setApiWarningLabel();
+
         accountMessagePanel.add(signupMessageLabel);
         accountMessagePanel.add(openWebsiteButton);
         accountMessagePanel.setAlignmentX(Component.CENTER_ALIGNMENT);
         accountMessagePanel.setBorder(BorderFactory.createEmptyBorder(10, 20, 10, 20));
         add(accountMessagePanel);
 
+        var apiSettingsPanel = new JPanel();
+        apiSettingsPanel.setLayout(new GridBagLayout());
+        apiSettingsPanel.setBorder(BorderFactory.createTitledBorder("API Settings"));
 
-        var apiKeyPanel = new JPanel();
-        apiKeyPanel.setLayout(new GridBagLayout());
-        apiKeyPanel.setBorder(BorderFactory.createTitledBorder("API Key"));
-        apiKeyPanel.add(apiKeyTextField);
-        apiKeyPanel.add(Box.createRigidArea(new Dimension(10, 0)));
-        apiKeyPanel.add(saveApiKeyButton);
+        var apiUrlLabel = new JLabel("API URL:");
+        apiUrlLabel.setLabelFor(apiUrlTextField);
+        UiHelper.addItemToGrid(apiSettingsPanel, apiUrlLabel, 0, 0);
+        UiHelper.addItemToGrid(apiSettingsPanel, apiUrlTextField, 1, 0);
+        UiHelper.addItemToGrid(apiSettingsPanel, resetApiUrlButton, 2, 0);
 
-        add(apiKeyPanel);
+        var apiKeyLabel = new JLabel("API Key:");
+        apiUrlLabel.setLabelFor(apiKeyTextField);
+        UiHelper.addItemToGrid(apiSettingsPanel, apiKeyLabel, 0, 1);
+        UiHelper.addItemToGrid(apiSettingsPanel, apiKeyTextField, 1, 1);
+
+        UiHelper.addItemToGrid(apiSettingsPanel, saveApiSettingsButton, 1, 2);
+
+        add(apiSettingsPanel);
 
         var collectionPanel = new JPanel();
         collectionPanel.setLayout(new GridBagLayout());
@@ -81,34 +109,29 @@ public class RailOpsSettingsPanel extends JmriPanel {
 
         add(collectionPanel);
 
-        addButtonAction(saveApiKeyButton);
-        addButtonAction(saveCollectionButton);
-        addButtonAction(openWebsiteButton);
-    }
-
-    protected void buttonActionPerformed(java.awt.event.ActionEvent ae) {
-        if (ae.getSource() == saveApiKeyButton) {
-            saveApiKey();
-        } else if (ae.getSource() == saveCollectionButton) {
-            saveCollection();
-        } else if (ae.getSource() == openWebsiteButton) {
+        openWebsiteButton.addActionListener((ActionEvent ae) -> {
             var desktop = Desktop.getDesktop();
             try {
                 desktop.browse(new URI("https://railops.app"));
             } catch (Exception e) {
                 throw new RuntimeException(e);
             }
-        }
-    }
-
-    protected void addButtonAction(JButton btn) {
-        btn.addActionListener(this::buttonActionPerformed);
+        });
+        saveApiSettingsButton.addActionListener((ActionEvent ae) -> {
+            saveApiSettings();
+        });
+        resetApiUrlButton.addActionListener((ActionEvent ae) -> {
+            resetApiUrl();
+        });
+        saveCollectionButton.addActionListener((ActionEvent ae) -> {
+            saveCollection();
+        });
     }
 
     private void writeSettings()
     {
         try {
-            InstanceManager.getDefault(jmri.jmrit.railops.config.RailOpsXml.class).save();
+            _railOpsConfig.save();
 
             JmriJOptionPane.showMessageDialogNonModal(
                     this,
@@ -130,13 +153,26 @@ public class RailOpsSettingsPanel extends JmriPanel {
         }
     }
 
-    private void saveApiKey() {
-        log.debug("saving api key");
+    private void setApiWarningLabel() {
+        _apiUrlWarningLabel.setText(String.format("WARNING: API URL is set to %s", _railOpsConfig.getApiUrl()));
+        _apiUrlWarningPanel.setVisible(_railOpsConfig.isNonDefaultApiUrl());
+    }
 
+    private void saveApiSettings() {
+        log.debug("saving api settings");
+
+        _railOpsConfig.setApiUrl(apiUrlTextField.getText());
         Auth.setApiKey(apiKeyTextField.getText());
 
         writeSettings();
+        setApiWarningLabel();
         loadCollections(); // reload the collections after API key has been saved
+    }
+
+    private void resetApiUrl() {
+        log.debug("Resetting API URL...");
+
+        apiUrlTextField.setText(RailOpsXml.DEFAULT_API_URL);
     }
 
     private void loadCollections() {
@@ -180,16 +216,6 @@ public class RailOpsSettingsPanel extends JmriPanel {
         );
 
         writeSettings();
-    }
-
-    // Copied from OperationsPanel
-    protected void addItemToGrid(JPanel p, JComponent c, int x, int y) {
-        GridBagConstraints gc = new GridBagConstraints();
-        gc.gridx = x;
-        gc.gridy = y;
-        gc.weightx = 100.0;
-        gc.weighty = 100.0;
-        p.add(c, gc);
     }
 
     private final static org.slf4j.Logger log = LoggerFactory.getLogger(RailOpsSettingsPanel.class);

@@ -19,7 +19,26 @@ public class RailOpsXml extends XmlFile implements InstanceManagerAutoDefault, I
     private static final String fileDirectory = "railops";
     private static final String fileName = "railops.xml";
 
+    private static final String attr_apiUrl = "apiUrl";
+
+    private String _apiUrl = DEFAULT_API_URL;
+
+    public static final String DEFAULT_API_URL = "https://prod-api.railops.app";
+
     public RailOpsXml() {
+    }
+
+    public String getApiUrl() { return _apiUrl; }
+    public void setApiUrl(String url) {
+        _apiUrl = url;
+    }
+
+    public Boolean isNonDefaultApiUrl() {
+        return !_apiUrl.equals(DEFAULT_API_URL);
+    }
+
+    public Boolean canSetApiUrl() {
+        return true; // TODO: Ideally this would only be allowed with an env variable or something set
     }
 
     public void save() throws IOException {
@@ -47,6 +66,7 @@ public class RailOpsXml extends XmlFile implements InstanceManagerAutoDefault, I
         ProcessingInstruction p = new ProcessingInstruction("xml-stylesheet", m);
         doc.addContent(0, p);
 
+        root.setAttribute(attr_apiUrl, getApiUrl());
         root.addContent(Auth.store());
         root.addContent(Roster.store());
 
@@ -65,6 +85,11 @@ public class RailOpsXml extends XmlFile implements InstanceManagerAutoDefault, I
         if (root == null) {
             log.debug("{} file cannot be read", name);
             return;
+        }
+
+        String savedApiUrl = root.getAttributeValue(attr_apiUrl);
+        if (savedApiUrl != null && !savedApiUrl.isEmpty()) {
+            _apiUrl = root.getAttributeValue(attr_apiUrl);
         }
 
         Auth.load(root);
