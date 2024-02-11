@@ -28,7 +28,7 @@ import java.net.http.HttpResponse;
 import java.util.List;
 
 public class RosterSyncService implements InstanceManagerAutoDefault, InstanceManagerAutoInitialize, Disposable {
-    private static String _apiBaseUrl = "https://prod-api.railops.app/"; // http://localhost:5007/";
+//    private static String _apiBaseUrl = "http://localhost:5007/";
 
     public RosterSyncService() {
     }
@@ -42,8 +42,7 @@ public class RosterSyncService implements InstanceManagerAutoDefault, InstanceMa
     }
 
     public List<ModelCollection> getCollections() throws URISyntaxException, IOException {
-//        URL url = new URI("http://localhost:5007/collections/mine").toURL();
-        URL url = new URI("https://prod-api.railops.app/collections/mine").toURL();
+        URL url = new URI(String.format("%scollections", ApiSettings.getApiUrl())).toURL();
         HttpURLConnection connection = (HttpURLConnection) url.openConnection();
         connection.setRequestProperty("Accept", "application/json");
         connection.setRequestProperty("ApiKey", ApiSettings.getApiKey());
@@ -66,7 +65,7 @@ public class RosterSyncService implements InstanceManagerAutoDefault, InstanceMa
     }
 
     public jmri.jmrit.railops.models.roster.BulkUpsertRosterResponse upsertLocomotives(int collectionId, List<UpsertLocomotiveModel> locomotives) throws Exception {
-        String absoluteUrl = String.format("%s%s", _apiBaseUrl, "locomotives/bulk");
+        String absoluteUrl = String.format("%s%s", ApiSettings.getApiUrl(), "/locomotives/bulk");
 
         BulkUpsertRosterRequest<UpsertLocomotiveModel> requestModel = new BulkUpsertRosterRequest<>(
                 collectionId,
@@ -98,7 +97,7 @@ public class RosterSyncService implements InstanceManagerAutoDefault, InstanceMa
 
     public LocomotiveModel createLocomotive(int collectionId, LocomotiveModel locomotiveModel) throws Exception {
         String url = String.format("collections/%s/locomotives", collectionId);
-        String absoluteUrl = String.format("%s%s", _apiBaseUrl, url);
+        String absoluteUrl = String.format("%s%s", ApiSettings.getApiUrl(), url);
 
         ObjectMapper mapper = new ObjectMapper();
         String requestBody = mapper.writeValueAsString(locomotiveModel);
@@ -131,7 +130,7 @@ public class RosterSyncService implements InstanceManagerAutoDefault, InstanceMa
     }
 
     public jmri.jmrit.railops.models.roster.BulkUpsertRosterResponse upsertCars(int collectionId, List<UpsertCarModel> cars) throws Exception {
-        String absoluteUrl = String.format("%s%s", _apiBaseUrl, "cars/bulk");
+        String absoluteUrl = String.format("%s%s", ApiSettings.getApiUrl(), "/cars/bulk");
 
         BulkUpsertRosterRequest<UpsertCarModel> requestModel = new BulkUpsertRosterRequest<>(
                 collectionId,
@@ -163,7 +162,7 @@ public class RosterSyncService implements InstanceManagerAutoDefault, InstanceMa
 
     public CarModel createCar(int collectionId, CarModel carModel) throws Exception {
         String url = String.format("collections/%s/cars", collectionId);
-        String absoluteUrl = String.format("%s%s", _apiBaseUrl, url);
+        String absoluteUrl = String.format("%s%s", ApiSettings.getApiUrl(), url);
 
         ObjectMapper mapper = new ObjectMapper();
         String requestBody = mapper.writeValueAsString(carModel);
@@ -189,7 +188,7 @@ public class RosterSyncService implements InstanceManagerAutoDefault, InstanceMa
     private <TResponseType> List<TResponseType> GetList(String url, Class<TResponseType> responseTypeClass) throws Exception {
         log.debug("Submitting GET request to '{}'", url);
 
-        String absoluteUrl = String.format("%s%s", _apiBaseUrl, url);
+        String absoluteUrl = String.format("%s%s", ApiSettings.getApiUrl(), url);
 
         ObjectMapper mapper = new ObjectMapper();
 
@@ -211,7 +210,7 @@ public class RosterSyncService implements InstanceManagerAutoDefault, InstanceMa
     private <TRequestType, TResponseType> TResponseType Post(String url, TRequestType requestModel) throws Exception {
         log.debug("Submitting POST request to '{}'", url);
 
-        String absoluteUrl = String.format("%s%s", _apiBaseUrl, url);
+        String absoluteUrl = String.format("%s%s", ApiSettings.getApiUrl(), url);
 
         ObjectMapper mapper = new ObjectMapper();
         String requestBody = mapper.writeValueAsString(requestModel);
