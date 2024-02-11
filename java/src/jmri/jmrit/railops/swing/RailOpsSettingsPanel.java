@@ -2,7 +2,7 @@ package jmri.jmrit.railops.swing;
 
 import jmri.InstanceManager;
 import jmri.jmrit.operations.setup.Control;
-import jmri.jmrit.railops.config.Auth;
+import jmri.jmrit.railops.config.ApiSettings;
 import jmri.jmrit.railops.config.RailOpsXml;
 import jmri.jmrit.railops.config.Roster;
 import jmri.jmrit.railops.models.ModelCollection;
@@ -47,8 +47,8 @@ public class RailOpsSettingsPanel extends JmriPanel {
         _railOpsConfig = InstanceManager.getDefault(RailOpsXml.class);
         _rosterSyncService = InstanceManager.getDefault(RosterSyncService.class);
 
-        apiUrlTextField.setText(_railOpsConfig.getApiUrl());
-        apiKeyTextField.setText(Auth.getApiKey());
+        apiUrlTextField.setText(ApiSettings.getApiUrl());
+        apiKeyTextField.setText(ApiSettings.getApiKey());
 
         loadCollections();
 
@@ -154,15 +154,15 @@ public class RailOpsSettingsPanel extends JmriPanel {
     }
 
     private void setApiWarningLabel() {
-        _apiUrlWarningLabel.setText(String.format("WARNING: API URL is set to %s", _railOpsConfig.getApiUrl()));
-        _apiUrlWarningPanel.setVisible(_railOpsConfig.isNonDefaultApiUrl());
+        _apiUrlWarningLabel.setText(String.format("WARNING: API URL is set to %s", ApiSettings.getApiUrl()));
+        _apiUrlWarningPanel.setVisible(ApiSettings.isNonDefaultApiUrl());
     }
 
     private void saveApiSettings() {
         log.debug("saving api settings");
 
-        _railOpsConfig.setApiUrl(apiUrlTextField.getText());
-        Auth.setApiKey(apiKeyTextField.getText());
+        ApiSettings.setApiUrl(apiUrlTextField.getText());
+        ApiSettings.setApiKey(apiKeyTextField.getText());
 
         writeSettings();
         setApiWarningLabel();
@@ -172,11 +172,11 @@ public class RailOpsSettingsPanel extends JmriPanel {
     private void resetApiUrl() {
         log.debug("Resetting API URL...");
 
-        apiUrlTextField.setText(RailOpsXml.DEFAULT_API_URL);
+        apiUrlTextField.setText(ApiSettings.DEFAULT_API_URL);
     }
 
     private void loadCollections() {
-        if (Auth.getApiKey().isEmpty()) {
+        if (ApiSettings.getApiKey().isEmpty()) {
             collectionComboBox.setEnabled(false);
             return;
         } else {

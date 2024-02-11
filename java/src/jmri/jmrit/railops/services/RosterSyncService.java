@@ -7,7 +7,7 @@ import jmri.Disposable;
 import jmri.InstanceManager;
 import jmri.InstanceManagerAutoDefault;
 import jmri.InstanceManagerAutoInitialize;
-import jmri.jmrit.railops.config.Auth;
+import jmri.jmrit.railops.config.ApiSettings;
 import jmri.jmrit.railops.config.RailOpsXml;
 import jmri.jmrit.railops.models.CarModel;
 import jmri.jmrit.railops.models.LocomotiveModel;
@@ -46,7 +46,7 @@ public class RosterSyncService implements InstanceManagerAutoDefault, InstanceMa
         URL url = new URI("https://prod-api.railops.app/collections/mine").toURL();
         HttpURLConnection connection = (HttpURLConnection) url.openConnection();
         connection.setRequestProperty("Accept", "application/json");
-        connection.setRequestProperty("ApiKey", Auth.getApiKey());
+        connection.setRequestProperty("ApiKey", ApiSettings.getApiKey());
         InputStream responseStream = connection.getInputStream();
         ObjectMapper mapper = new ObjectMapper();
 
@@ -82,7 +82,7 @@ public class RosterSyncService implements InstanceManagerAutoDefault, InstanceMa
         HttpClient client = HttpClient.newHttpClient();
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create(absoluteUrl))
-                .setHeader("ApiKey", Auth.getApiKey())
+                .setHeader("ApiKey", ApiSettings.getApiKey())
                 .setHeader("Accept", "application/json")
                 .setHeader("Content-Type", "application/json")
                 .POST(HttpRequest.BodyPublishers.ofString(requestBody))
@@ -108,7 +108,7 @@ public class RosterSyncService implements InstanceManagerAutoDefault, InstanceMa
         HttpClient client = HttpClient.newHttpClient();
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create(absoluteUrl))
-                .setHeader("ApiKey", Auth.getApiKey())
+                .setHeader("ApiKey", ApiSettings.getApiKey())
                 .setHeader("Accept", "application/json")
                 .setHeader("Content-Type", "application/json")
                 .POST(HttpRequest.BodyPublishers.ofString(requestBody))
@@ -147,7 +147,7 @@ public class RosterSyncService implements InstanceManagerAutoDefault, InstanceMa
         HttpClient client = HttpClient.newHttpClient();
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create(absoluteUrl))
-                .setHeader("ApiKey", Auth.getApiKey())
+                .setHeader("ApiKey", ApiSettings.getApiKey())
                 .setHeader("Accept", "application/json")
                 .setHeader("Content-Type", "application/json")
                 .POST(HttpRequest.BodyPublishers.ofString(requestBody))
@@ -173,7 +173,7 @@ public class RosterSyncService implements InstanceManagerAutoDefault, InstanceMa
         HttpClient client = HttpClient.newHttpClient();
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create(absoluteUrl))
-                .setHeader("ApiKey", Auth.getApiKey())
+                .setHeader("ApiKey", ApiSettings.getApiKey())
                 .setHeader("Accept", "application/json")
                 .setHeader("Content-Type", "application/json")
                 .POST(HttpRequest.BodyPublishers.ofString(requestBody))
@@ -197,7 +197,7 @@ public class RosterSyncService implements InstanceManagerAutoDefault, InstanceMa
         URL requestUrl = new URI(absoluteUrl).toURL();
         HttpURLConnection connection = (HttpURLConnection) requestUrl.openConnection();
         connection.setRequestProperty("Accept", "application/json");
-        connection.setRequestProperty("ApiKey", Auth.getApiKey());
+        connection.setRequestProperty("ApiKey", ApiSettings.getApiKey());
         connection.setRequestMethod("GET");
         InputStream responseStream = connection.getInputStream();
 
@@ -221,7 +221,7 @@ public class RosterSyncService implements InstanceManagerAutoDefault, InstanceMa
         HttpClient client = HttpClient.newHttpClient();
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create(absoluteUrl))
-                .setHeader("ApiKey", Auth.getApiKey())
+                .setHeader("ApiKey", ApiSettings.getApiKey())
                 .setHeader("Accept", "application/json")
                 .setHeader("Content-Type", "application/json")
                 .POST(HttpRequest.BodyPublishers.ofString(requestBody))

@@ -6,7 +6,7 @@ import jmri.jmrit.operations.rollingstock.cars.CarManager;
 import jmri.jmrit.operations.rollingstock.engines.Engine;
 import jmri.jmrit.operations.rollingstock.engines.EngineManager;
 import jmri.jmrit.operations.setup.Control;
-import jmri.jmrit.railops.config.Auth;
+import jmri.jmrit.railops.config.ApiSettings;
 import jmri.jmrit.railops.config.RailOpsXml;
 import jmri.jmrit.railops.config.Roster;
 import jmri.jmrit.railops.models.roster.BulkUpsertRosterResponse;
@@ -79,7 +79,7 @@ public class RailOpsSyncPanel extends JmriPanel implements PropertyChangeListene
         localCarCountLabel.setText(Integer.toString(localCarCount));
 //        localCarCountLabel.set
 
-        if (!Auth.getApiKey().isEmpty()) {
+        if (!ApiSettings.getApiKey().isEmpty()) {
             if (jmri.jmrit.railops.config.Roster.getCollectionId() != 0) {
                 refreshRemoteRoster(jmri.jmrit.railops.config.Roster.getCollectionId());
             }
@@ -88,7 +88,7 @@ public class RailOpsSyncPanel extends JmriPanel implements PropertyChangeListene
         setSize(new Dimension(Control.panelWidth700, Control.panelHeight300));
         setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
 
-        if (Auth.getApiKey().isEmpty()) {
+        if (ApiSettings.getApiKey().isEmpty()) {
             var configWarningPanel = new JPanel();
             configWarningPanel.setLayout(new BoxLayout(configWarningPanel, BoxLayout.X_AXIS));
 
@@ -130,7 +130,7 @@ public class RailOpsSyncPanel extends JmriPanel implements PropertyChangeListene
         addItemToGrid(panelActions, refreshRemoteButton, 0, 0);
         addItemToGrid(panelActions, syncToRemoteButton, 1, 0);
 
-        if (Auth.getApiKey().isEmpty()) {
+        if (ApiSettings.getApiKey().isEmpty()) {
             refreshRemoteButton.setEnabled(false);
             syncToRemoteButton.setEnabled(false);
         }
@@ -140,7 +140,7 @@ public class RailOpsSyncPanel extends JmriPanel implements PropertyChangeListene
         addButtonAction(refreshRemoteButton);
         addButtonAction(syncToRemoteButton);
 
-        Auth.getDefault().addPropertyChangeListener(this);
+        ApiSettings.getDefault().addPropertyChangeListener(this);
         Roster.getDefault().addPropertyChangeListener(this);
     }
 
@@ -309,7 +309,7 @@ public class RailOpsSyncPanel extends JmriPanel implements PropertyChangeListene
 
     @Override
     public void propertyChange(PropertyChangeEvent evt) {
-        if (evt.getPropertyName().equals(Auth.API_KEY_PROPERTY_CHANGE)) {
+        if (evt.getPropertyName().equals(ApiSettings.API_KEY_PROPERTY_CHANGE)) {
             // TODO: show/hide auth key warning
         }
 
@@ -333,7 +333,7 @@ public class RailOpsSyncPanel extends JmriPanel implements PropertyChangeListene
     public void dispose() {
         super.dispose();
 
-        Auth.getDefault().removePropertyChangeListener(this);
+        ApiSettings.getDefault().removePropertyChangeListener(this);
         Roster.getDefault().removePropertyChangeListener(this);
     }
 
