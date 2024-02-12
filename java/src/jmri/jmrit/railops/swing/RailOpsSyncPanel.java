@@ -260,6 +260,19 @@ public class RailOpsSyncPanel extends JmriPanel implements PropertyChangeListene
                     engine.getModel(),
                     engine.getTypeName()
             );
+
+            if (decoderEngine != null) {
+                locoModel.setDecoderFamily(decoderEngine.getDecoderFamily());
+                locoModel.setDecoderModel(decoderEngine.getDecoderModel());
+                locoModel.setDecoderComments(decoderEngine.getDecoderComment());
+
+                if (decoderEngine.isLongAddress()) {
+                    locoModel.setLongAddress(decoderEngine.getDccAddress());
+                } else {
+                    locoModel.setShortAddress(decoderEngine.getDccAddress());
+                }
+            }
+
             upsertLocomotives.add(locoModel);
         }
 

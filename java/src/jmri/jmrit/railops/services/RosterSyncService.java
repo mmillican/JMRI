@@ -65,7 +65,7 @@ public class RosterSyncService implements InstanceManagerAutoDefault, InstanceMa
     }
 
     public jmri.jmrit.railops.models.roster.BulkUpsertRosterResponse upsertLocomotives(int collectionId, List<UpsertLocomotiveModel> locomotives) throws Exception {
-        String absoluteUrl = String.format("%s%s", ApiSettings.getApiUrl(), "/locomotives/bulk");
+        String absoluteUrl = String.format("%slocomotives/bulk", ApiSettings.getApiUrl());
 
         BulkUpsertRosterRequest<UpsertLocomotiveModel> requestModel = new BulkUpsertRosterRequest<>(
                 collectionId,
@@ -76,7 +76,7 @@ public class RosterSyncService implements InstanceManagerAutoDefault, InstanceMa
         ObjectMapper mapper = new ObjectMapper();
         String requestBody = mapper.writeValueAsString(requestModel);
 
-        log.debug("... request body :: {}", requestBody);
+//        log.debug("... request body :: {}", requestBody);
 
         HttpClient client = HttpClient.newHttpClient();
         HttpRequest request = HttpRequest.newBuilder()
@@ -102,7 +102,7 @@ public class RosterSyncService implements InstanceManagerAutoDefault, InstanceMa
         ObjectMapper mapper = new ObjectMapper();
         String requestBody = mapper.writeValueAsString(locomotiveModel);
 
-        log.debug("... request body :: {}", requestBody);
+//        log.debug("... request body :: {}", requestBody);
 
         HttpClient client = HttpClient.newHttpClient();
         HttpRequest request = HttpRequest.newBuilder()
@@ -130,7 +130,7 @@ public class RosterSyncService implements InstanceManagerAutoDefault, InstanceMa
     }
 
     public jmri.jmrit.railops.models.roster.BulkUpsertRosterResponse upsertCars(int collectionId, List<UpsertCarModel> cars) throws Exception {
-        String absoluteUrl = String.format("%s%s", ApiSettings.getApiUrl(), "/cars/bulk");
+        String absoluteUrl = String.format("%scars/bulk", ApiSettings.getApiUrl());
 
         BulkUpsertRosterRequest<UpsertCarModel> requestModel = new BulkUpsertRosterRequest<>(
                 collectionId,
@@ -141,7 +141,7 @@ public class RosterSyncService implements InstanceManagerAutoDefault, InstanceMa
         ObjectMapper mapper = new ObjectMapper();
         String requestBody = mapper.writeValueAsString(requestModel);
 
-        log.debug("... request body :: {}", requestBody);
+//        log.debug("... request body :: {}", requestBody);
 
         HttpClient client = HttpClient.newHttpClient();
         HttpRequest request = HttpRequest.newBuilder()
@@ -167,7 +167,7 @@ public class RosterSyncService implements InstanceManagerAutoDefault, InstanceMa
         ObjectMapper mapper = new ObjectMapper();
         String requestBody = mapper.writeValueAsString(carModel);
 
-        log.debug("... request body :: {}", requestBody);
+//        log.debug("... request body :: {}", requestBody);
 
         HttpClient client = HttpClient.newHttpClient();
         HttpRequest request = HttpRequest.newBuilder()
@@ -215,7 +215,7 @@ public class RosterSyncService implements InstanceManagerAutoDefault, InstanceMa
         ObjectMapper mapper = new ObjectMapper();
         String requestBody = mapper.writeValueAsString(requestModel);
 
-        log.debug("... request body :: {}", requestBody);
+//        log.debug("... request body :: {}", requestBody);
 
         HttpClient client = HttpClient.newHttpClient();
         HttpRequest request = HttpRequest.newBuilder()
