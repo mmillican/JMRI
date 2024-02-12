@@ -26,7 +26,11 @@ public class ApiSettings extends PropertyChangeSupport implements InstanceManage
     public static final String API_KEY_PROPERTY_CHANGE = "apiKeyChange"; // NOI18N
 
     public static String getApiUrl() {
-        return getDefault()._apiUrl;
+        String url = getDefault()._apiUrl;
+        if (!url.endsWith("/")) {
+            url = String.format("%s/", url);
+        }
+        return url;
     }
 
     public static void setApiUrl(String url) {
