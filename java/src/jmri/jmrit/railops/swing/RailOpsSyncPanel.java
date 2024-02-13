@@ -28,16 +28,14 @@ import java.util.List;
 public class RailOpsSyncPanel extends JmriPanel implements PropertyChangeListener {
     private final ApiUrlWarning _apiUrlWarning;
 
-    JButton syncToRemoteButton = new JButton("Sync to Remote");
-    JButton refreshRemoteButton = new JButton("Refresh Remote Counts");
+    JButton syncToRemoteButton = new JButton("Sync to RailOps");
+    JButton refreshRemoteButton = new JButton("Refresh RailOps Counts");
     JButton openSettingsButton = new JButton("Settings");
-
-    protected JComboBox<jmri.jmrit.railops.models.ModelCollection> collectionComboBox = new JComboBox<>();
 
     private static final JLabel locomotivesHeadingLabel = new JLabel("Locomotives");
     private static final JLabel carsHeadingLabel = new JLabel("Cars");
-    private static final JLabel localHeadingLabel = new JLabel("Local Roster");
-    private static final JLabel remoteHeadingLabel = new JLabel("Remote Roster");
+    private static final JLabel localHeadingLabel = new JLabel("Local JMRI Roster");
+    private static final JLabel remoteHeadingLabel = new JLabel("RailOps Roster");
 
     private static final JLabel localLocomotiveCountLabel = new JLabel("0");
     private static final JLabel localCarCountLabel = new JLabel("0");
@@ -179,6 +177,14 @@ public class RailOpsSyncPanel extends JmriPanel implements PropertyChangeListene
             remoteCarCountLabel.setText(Integer.toString(cars.size()));
         } catch (Exception ex) {
             log.error("Error refreshing remote roster", ex);
+
+            JmriJOptionPane.showMessageDialogNonModal(
+                    this,
+                    "There was an error loading the remote roster from RailOps. Try again, or check the logs for more information.",
+                    "Error loading roster",
+                    JmriJOptionPane.ERROR_MESSAGE,
+                    null
+            );
         }
     }
 

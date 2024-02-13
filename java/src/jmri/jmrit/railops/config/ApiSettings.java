@@ -20,7 +20,7 @@ public class ApiSettings extends PropertyChangeSupport implements InstanceManage
 
     private String _apiKey = NONE;
 
-    public static final String DEFAULT_API_URL = "https://prod-api.railops.app";
+    public static final String DEFAULT_API_URL = "https://prod-api.railops.app/";
 
     public static final String API_URL_PROPERTY_CHANGE = "apiUrlChange"; // NOI18N
     public static final String API_KEY_PROPERTY_CHANGE = "apiKeyChange"; // NOI18N

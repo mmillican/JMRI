@@ -190,6 +190,14 @@ public class RailOpsSettingsPanel extends JmriPanel {
             }
         } catch (Exception ex) {
             log.error("Could not get collections from API", ex);
+
+            JmriJOptionPane.showMessageDialogNonModal(
+                    this,
+                    "There was an error loading your RailOps Collections. Try again, or check the logs for more information.",
+                    "Error",
+                    JmriJOptionPane.ERROR_MESSAGE,
+                    null
+            );
         }
     }
 
