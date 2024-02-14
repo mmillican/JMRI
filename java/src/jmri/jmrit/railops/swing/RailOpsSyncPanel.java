@@ -132,15 +132,12 @@ public class RailOpsSyncPanel extends JmriPanel implements PropertyChangeListene
         addItemToGrid(panelActions, refreshRemoteButton, 0, 0);
         addItemToGrid(panelActions, syncToRemoteButton, 1, 0);
 
-        if (ApiSettings.getApiKey().isEmpty()) {
-            refreshRemoteButton.setEnabled(false);
-            syncToRemoteButton.setEnabled(false);
-        }
-
         add(panelActions);
 
         addButtonAction(refreshRemoteButton);
         addButtonAction(syncToRemoteButton);
+
+        toggleButtonState();
 
         ApiSettings.getDefault().addPropertyChangeListener(this);
         Roster.getDefault().addPropertyChangeListener(this);
@@ -164,6 +161,15 @@ public class RailOpsSyncPanel extends JmriPanel implements PropertyChangeListene
 
     protected void addButtonAction(JButton btn) {
         btn.addActionListener(this::buttonActionPerformed);
+    }
+
+    private void toggleButtonState() {
+        boolean apiSettingsValid = !ApiSettings.getApiKey().isEmpty()
+                && !ApiSettings.getApiUrl().isEmpty()
+                && Roster.getCollectionId() !=  0;
+
+        refreshRemoteButton.setEnabled(apiSettingsValid);
+        syncToRemoteButton.setEnabled(apiSettingsValid);
     }
 
     private void refreshRemoteRoster(int collectionId) {
@@ -334,6 +340,7 @@ public class RailOpsSyncPanel extends JmriPanel implements PropertyChangeListene
     public void propertyChange(PropertyChangeEvent evt) {
         if (evt.getPropertyName().equals(ApiSettings.API_KEY_PROPERTY_CHANGE)) {
             // TODO: show/hide auth key warning
+            toggleButtonState();
         }
 
         if (evt.getPropertyName().equals(Roster.COLLECTION_ID_PROPERTY_CHANGE)

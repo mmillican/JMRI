@@ -185,6 +185,11 @@ public class RailOpsSettingsPanel extends JmriPanel {
                 }
             }
 
+            if (Roster.getCollectionId() != 0 && collections.size() == 1) {
+                selectedCollection = collections.getFirst();
+                Roster.setCollectionId(selectedCollection.getCollectionId());
+            }
+
             if (selectedCollection != null) {
                 collectionComboBox.setSelectedItem(selectedCollection);
             }
