@@ -243,11 +243,11 @@ public class RailOpsSyncPanel extends JmriPanel implements PropertyChangeListene
 
         List<jmri.jmrit.railops.models.roster.UpsertLocomotiveModel> upsertLocomotives = new ArrayList<>();
         for(Engine engine : localOpsEngines) {
-            String engineIdentifier = String.format("%s %s", engine.getRoadName(), engine.getNumber());
-            log.debug("Mapping engine '{}'", engineIdentifier);
+            log.debug("Mapping engine '{}'", engine.getId());
 
             var decoderEngine = dcProEngines.stream()
-                    .filter(x -> x.getId().equals(engineIdentifier))
+                    .filter(x -> x.getId().replace(" ", "")
+                            .equals(engine.getId().replace(" ", "")))
                     .findFirst()
                     .orElse(null);
 
