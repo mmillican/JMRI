@@ -111,15 +111,9 @@ public class RailOpsSettingsPanel extends JmriPanel {
                 throw new RuntimeException(e);
             }
         });
-        saveApiSettingsButton.addActionListener((ActionEvent ae) -> {
-            saveApiSettings();
-        });
-        resetApiUrlButton.addActionListener((ActionEvent ae) -> {
-            resetApiUrl();
-        });
-        saveCollectionButton.addActionListener((ActionEvent ae) -> {
-            saveCollection();
-        });
+        saveApiSettingsButton.addActionListener((ActionEvent ae) -> saveApiSettings());
+        resetApiUrlButton.addActionListener((ActionEvent ae) -> resetApiUrl());
+        saveCollectionButton.addActionListener((ActionEvent ae) -> saveCollection());
     }
 
     private void writeSettings()
