@@ -36,30 +36,11 @@ public class UpsertCarModel extends UpsertRosterItemModel {
     public UpsertCarModel(int id,
                     String roadName,
                     String roadNumber,
-                    String acquiredOn,
-                    double purchasePrice,
-                    double value,
-                    int length,
-                    String modelManufacturer,
-                    double weight,
-                    String owner,
-                    String notes,
                     String type,
-                    Boolean isPassenger,
-                    Boolean isCaboose,
-                    Boolean hasFRED,
-                    Boolean isUtility,
-                    Boolean isHazardous,
                     String color) {
-        super(id, roadName, roadNumber, acquiredOn, purchasePrice, value, length, modelManufacturer, weight, owner, notes);
+        super(id, roadName, roadNumber);
 
         _type = type;
-        _isPassenger = isPassenger;
-        _isCaboose = isCaboose;
-        _hasFRED = hasFRED;
-        _isUtility = isUtility;
-        _isHazardous = isHazardous;
         _color = color;
     }
-
 }

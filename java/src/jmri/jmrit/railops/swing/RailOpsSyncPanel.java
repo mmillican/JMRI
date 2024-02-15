@@ -13,6 +13,7 @@ import jmri.jmrit.railops.models.roster.BulkUpsertRosterResponse;
 import jmri.jmrit.railops.models.roster.UpsertCarModel;
 import jmri.jmrit.railops.models.roster.UpsertLocomotiveModel;
 import jmri.jmrit.railops.services.RosterSyncService;
+import jmri.jmrit.roster.RosterEntry;
 import jmri.util.swing.JmriJOptionPane;
 import jmri.util.swing.JmriPanel;
 import org.slf4j.LoggerFactory;
@@ -257,33 +258,7 @@ public class RailOpsSyncPanel extends JmriPanel implements PropertyChangeListene
                 log.debug("matching decoder pro engine NOT found {}", engine.getId());
             }
 
-            var locoModel = new UpsertLocomotiveModel(
-                    0,
-                    engine.getRoadName().trim(),
-                    engine.getNumber().trim(),
-                    null, // TODO: Set acquired date
-                    0,
-                    0,
-                    engine.getLengthInteger(),
-                    decoderEngine != null ? decoderEngine.getMfg() : null,
-                    engine.getAdjustedWeightTons(),
-                    engine.getOwnerName(),
-                    engine.getComment(),
-                    engine.getModel(),
-                    engine.getTypeName()
-            );
-
-            if (decoderEngine != null) {
-                locoModel.setDecoderFamily(decoderEngine.getDecoderFamily());
-                locoModel.setDecoderModel(decoderEngine.getDecoderModel());
-                locoModel.setDecoderComments(decoderEngine.getDecoderComment());
-
-                if (decoderEngine.isLongAddress()) {
-                    locoModel.setLongAddress(decoderEngine.getDccAddress());
-                } else {
-                    locoModel.setShortAddress(decoderEngine.getDccAddress());
-                }
-            }
+            var locoModel = getUpsertLocomotiveModel(engine, decoderEngine);
 
             upsertLocomotives.add(locoModel);
         }
@@ -298,31 +273,62 @@ public class RailOpsSyncPanel extends JmriPanel implements PropertyChangeListene
         refreshRemoteRoster(collectionId); // TODO: maybe we should just set/add the created count?
     }
 
+    private static UpsertLocomotiveModel getUpsertLocomotiveModel(Engine engine, RosterEntry decoderEngine) {
+        var locoModel = new UpsertLocomotiveModel(
+                0,
+                engine.getRoadName().trim(),
+                engine.getNumber().trim(),
+                engine.getModel(),
+                engine.getTypeName()
+        );
+
+        // TODO: Set acquiredOn, purchasePrice, value
+
+        locoModel.setLength(engine.getLengthInteger());
+        locoModel.setWeight(engine.getAdjustedWeightTons());
+        locoModel.setOwner(engine.getOwnerName());
+        locoModel.setNotes(engine.getComment());
+
+        if (decoderEngine != null) {
+            locoModel.setModelManufacturer(decoderEngine.getMfg());
+
+            locoModel.setDecoderFamily(decoderEngine.getDecoderFamily());
+            locoModel.setDecoderModel(decoderEngine.getDecoderModel());
+            locoModel.setDecoderComments(decoderEngine.getDecoderComment());
+
+            if (decoderEngine.isLongAddress()) {
+                locoModel.setLongAddress(decoderEngine.getDccAddress());
+            } else {
+                locoModel.setShortAddress(decoderEngine.getDccAddress());
+            }
+        }
+        return locoModel;
+    }
+
     private void syncCarsToRemote(int collectionId) throws Exception {
         List<Car> localCars = InstanceManager.getDefault(CarManager.class).getList();
 
-        List<jmri.jmrit.railops.models.roster.UpsertCarModel> upsertCars = new ArrayList<>();
+        List<UpsertCarModel> upsertCars = new ArrayList<>();
         for(Car car : localCars) {
             var carModel = new UpsertCarModel(
                     0,
                     car.getRoadName(),
                     car.getNumber(),
-                    null, // TODO: Set acquired date
-                    0,
-                    0,
-                    car.getLengthInteger(),
-                    "",
-                    car.getAdjustedWeightTons(),
-                    car.getOwnerName(),
-                    car.getComment(),
                     car.getTypeName(),
-                    car.isPassenger(),
-                    car.isCaboose(),
-                    car.hasFred(),
-                    car.isUtility(),
-                    car.isHazardous(),
                     car.getColor()
             );
+
+            // AcquiredOn, PurchasePrice, Value, ModelMfg not available
+            carModel.setLength(car.getLengthInteger());
+            carModel.setWeight(car.getAdjustedWeightTons());
+            carModel.setOwner(car.getOwnerName());
+            carModel.setNotes(car.getComment());
+            carModel.setIsPassenger(car.isPassenger());
+            carModel.setIsCaboose(car.isCaboose());
+            carModel.setHasFRED(car.hasFred());
+            carModel.setIsUtility(car.isUtility());
+            carModel.setIsHazardous(car.isHazardous());
+
             upsertCars.add(carModel);
         }
 

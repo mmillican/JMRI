@@ -38,17 +38,9 @@ public class UpsertLocomotiveModel extends UpsertRosterItemModel {
     public UpsertLocomotiveModel(int id,
                                  String roadName,
                                  String roadNumber,
-                                 String acquiredOn,
-                                 double purchasePrice,
-                                 double value,
-                                 int length,
-                                 String modelManufacturer,
-                                 double weight,
-                                 String owner,
-                                 String notes,
                                  String model,
                                  String engineType) {
-        super(id, roadName, roadNumber, acquiredOn, purchasePrice, value, length, modelManufacturer, weight, owner, notes);
+        super(id, roadName, roadNumber);
 
         _model = model;
         _engineType = engineType;

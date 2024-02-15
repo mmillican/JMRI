@@ -54,27 +54,11 @@ public abstract class UpsertRosterItemModel {
     protected UpsertRosterItemModel(
         int id,
         String roadName,
-        String roadNumber,
-        String acquiredOn,
-        double purchasePrice,
-        double value,
-        int length,
-        String modelManufacturer,
-        double weight,
-        String owner,
-        String notes
+        String roadNumber
     ) {
         _id = id;
         _roadName = roadName;
         _roadNumber = roadNumber;
-        _acquiredOn = acquiredOn;
-        _purchasePrice = purchasePrice;
-        _value = value;
-        _length = length;
-        _modelManufacturer = modelManufacturer;
-        _weight = weight;
-        _owner = owner;
-        _notes = notes;
     }
 
     @Override
