@@ -8,6 +8,8 @@ import jmri.InstanceManagerAutoDefault;
 import jmri.InstanceManagerAutoInitialize;
 import jmri.jmrit.railops.config.ApiSettings;
 import jmri.jmrit.railops.config.RailOpsXml;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.net.URI;
 import java.net.http.HttpClient;
@@ -68,6 +70,8 @@ public class RailOpsApiService implements InstanceManagerAutoDefault, InstanceMa
 
         String requestBody = _mapper.writeValueAsString(requestModel);
 
+        log.debug("POST request body: {}", requestBody);
+
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create(url))
                 .setHeader("ApiKey", ApiSettings.getApiKey())
@@ -80,4 +84,6 @@ public class RailOpsApiService implements InstanceManagerAutoDefault, InstanceMa
         // But, having issues with generic types and the object mapper
         return _httpClient.send(request, HttpResponse.BodyHandlers.ofString());
     }
+
+    private static final Logger log = LoggerFactory.getLogger(RailOpsApiService.class);
 }

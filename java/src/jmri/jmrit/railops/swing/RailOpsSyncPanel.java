@@ -247,8 +247,8 @@ public class RailOpsSyncPanel extends JmriPanel implements PropertyChangeListene
             log.debug("Mapping engine '{}'", engine.getId());
 
             var decoderEngine = dcProEngines.stream()
-                    .filter(x -> x.getId().replace(" ", "")
-                            .equals(engine.getId().replace(" ", "")))
+                    .filter(x -> x.getRoadName().trim().equals(engine.getRoadName().trim())
+                            && x.getRoadNumber().trim().equals(engine.getNumber().trim()))
                     .findFirst()
                     .orElse(null);
 

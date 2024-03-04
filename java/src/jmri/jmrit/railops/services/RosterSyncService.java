@@ -57,6 +57,10 @@ public class RosterSyncService implements InstanceManagerAutoDefault, InstanceMa
 
         HttpResponse<String> httpResponse = _apiService.post("locomotives/bulk", requestModel);
 
+        if (httpResponse.statusCode() != 200) {
+            throw new Exception("Error syncing locomotives to RailOps");
+        }
+
         log.debug("Bulk upsert locomotive HTTP response: {}", httpResponse);
         return _mapper.readValue(httpResponse.body(), BulkUpsertRosterResponse.class);
     }
@@ -77,6 +81,10 @@ public class RosterSyncService implements InstanceManagerAutoDefault, InstanceMa
         );
 
         HttpResponse<String> httpResponse = _apiService.post("cars/bulk", requestModel);
+
+        if (httpResponse.statusCode() != 200) {
+            throw new Exception("Error syncing cars to RailOps");
+        }
 
         log.debug("Bulk upsert car HTTP response: {}", httpResponse);
         return _mapper.readValue(httpResponse.body(), BulkUpsertRosterResponse.class);
