@@ -2,6 +2,7 @@ package jmri.jmrit.railops.swing;
 
 import jmri.InstanceManager;
 import jmri.jmrit.operations.setup.Control;
+import jmri.jmrit.railops.Version;
 import jmri.jmrit.railops.config.ApiSettings;
 import jmri.jmrit.railops.config.RailOpsXml;
 import jmri.jmrit.railops.config.Roster;
@@ -102,6 +103,16 @@ public class RailOpsSettingsPanel extends JmriPanel {
         collectionPanel.add(saveCollectionButton);
 
         add(collectionPanel);
+
+        var appInfoPanel = new JPanel();
+        appInfoPanel.setLayout(new GridBagLayout());
+
+        var pluginVersion = Version.getVersion();
+        var syncVersionPluginLabel = new JLabel(String.format("RailOps Plugin Version: %s", pluginVersion));
+
+        appInfoPanel.add(syncVersionPluginLabel);
+
+        add(appInfoPanel);
 
         openWebsiteButton.addActionListener((ActionEvent ae) -> {
             var desktop = Desktop.getDesktop();
