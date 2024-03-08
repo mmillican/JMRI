@@ -9,6 +9,8 @@ import jmri.jmrit.operations.setup.Control;
 import jmri.jmrit.railops.config.ApiSettings;
 import jmri.jmrit.railops.config.RailOpsXml;
 import jmri.jmrit.railops.config.Roster;
+import jmri.jmrit.railops.models.CarModel;
+import jmri.jmrit.railops.models.LocomotiveModel;
 import jmri.jmrit.railops.models.roster.BulkUpsertRosterResponse;
 import jmri.jmrit.railops.models.roster.UpsertCarModel;
 import jmri.jmrit.railops.models.roster.UpsertLocomotiveModel;
@@ -30,7 +32,7 @@ public class RailOpsSyncPanel extends JmriPanel implements PropertyChangeListene
     private final ApiUrlWarning _apiUrlWarning;
 
     JButton syncToRemoteButton = new JButton("Sync to RailOps");
-    JButton refreshRemoteButton = new JButton("Refresh RailOps Counts");
+    JButton refreshCountsButton = new JButton("Refresh Counts");
     JButton openSettingsButton = new JButton("Settings");
 
     private static final JLabel locomotivesHeadingLabel = new JLabel("Locomotives");
@@ -73,20 +75,6 @@ public class RailOpsSyncPanel extends JmriPanel implements PropertyChangeListene
 
         _apiUrlWarning = new ApiUrlWarning();
         add(_apiUrlWarning);
-//        apiKeyTextField.setText(Auth.getApiKey());
-
-        int localLocomotiveCount = InstanceManager.getDefault(EngineManager.class).getNumEntries();
-        int localCarCount = InstanceManager.getDefault(CarManager.class).getNumEntries();
-
-        localLocomotiveCountLabel.setText(Integer.toString(localLocomotiveCount));
-        localCarCountLabel.setText(Integer.toString(localCarCount));
-//        localCarCountLabel.set
-
-        if (!ApiSettings.getApiKey().isEmpty()) {
-            if (jmri.jmrit.railops.config.Roster.getCollectionId() != 0) {
-                refreshRemoteRoster(jmri.jmrit.railops.config.Roster.getCollectionId());
-            }
-        }
 
         setSize(new Dimension(Control.panelWidth700, Control.panelHeight300));
         setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
@@ -108,6 +96,8 @@ public class RailOpsSyncPanel extends JmriPanel implements PropertyChangeListene
         }
 
         // Row 2 - Roster Summary
+        refreshRosterCounts();
+
         JPanel panelCountSummary = new JPanel();
         panelCountSummary.setLayout(new GridBagLayout());
         panelCountSummary.setBorder(BorderFactory.createTitledBorder("Roster Summary"));
@@ -130,12 +120,12 @@ public class RailOpsSyncPanel extends JmriPanel implements PropertyChangeListene
         panelActions.setLayout(new GridBagLayout());
         panelActions.setBorder(BorderFactory.createTitledBorder("Actions"));
 
-        addItemToGrid(panelActions, refreshRemoteButton, 0, 0);
+        addItemToGrid(panelActions, refreshCountsButton, 0, 0);
         addItemToGrid(panelActions, syncToRemoteButton, 1, 0);
 
         add(panelActions);
 
-        addButtonAction(refreshRemoteButton);
+        addButtonAction(refreshCountsButton);
         addButtonAction(syncToRemoteButton);
 
         toggleButtonState();
@@ -149,9 +139,9 @@ public class RailOpsSyncPanel extends JmriPanel implements PropertyChangeListene
             log.info("show settings");
             var settingsFrame = new RailOpsSettingsFrame();
             settingsFrame.setVisible(true);
-        } else if (ae.getSource() == refreshRemoteButton) {
+        } else if (ae.getSource() == refreshCountsButton) {
             try {
-                refreshRemoteRoster(jmri.jmrit.railops.config.Roster.getCollectionId());
+                refreshRosterCounts();
             } catch (Exception ex) {
                 log.error("Error triggering refreshRemoteButton action", ex);
             }
@@ -169,19 +159,39 @@ public class RailOpsSyncPanel extends JmriPanel implements PropertyChangeListene
                 && !ApiSettings.getApiUrl().isEmpty()
                 && Roster.getCollectionId() !=  0;
 
-        refreshRemoteButton.setEnabled(apiSettingsValid);
+        refreshCountsButton.setEnabled(apiSettingsValid);
         syncToRemoteButton.setEnabled(apiSettingsValid);
     }
 
-    private void refreshRemoteRoster(int collectionId) {
+    private void refreshRosterCounts() {
+        refreshLocalRoster();
+        refreshRemoteRoster();
+    }
+
+    private void refreshLocalRoster() {
+        int locomotiveCount = InstanceManager.getDefault(EngineManager.class).getNumEntries();
+        int carCount = InstanceManager.getDefault(CarManager.class).getNumEntries();
+
+        localLocomotiveCountLabel.setText(Integer.toString(locomotiveCount));
+        localCarCountLabel.setText(Integer.toString(carCount));
+    }
+
+    private void refreshRemoteRoster() {
+        int collectionId = Roster.getCollectionId();
+        if (ApiSettings.getApiKey().isEmpty() || collectionId == 0) {
+            return;
+        }
+
         log.info("refreshing remote roster for collection ID {}", collectionId);
 
         try {
-            List<jmri.jmrit.railops.models.LocomotiveModel> locomotives = _rosterSyncService.getLocomotives(collectionId);
-            remoteLocomotiveCountLabel.setText(Integer.toString(locomotives.size()));
+            List<LocomotiveModel> locomotives = _rosterSyncService.getLocomotives(collectionId);
+            int locomotiveCount = locomotives.size();
+            remoteLocomotiveCountLabel.setText(Integer.toString(locomotiveCount));
 
-            List<jmri.jmrit.railops.models.CarModel> cars = _rosterSyncService.getCars(collectionId);
-            remoteCarCountLabel.setText(Integer.toString(cars.size()));
+            List<CarModel> cars = _rosterSyncService.getCars(collectionId);
+            int carCount = cars.size();
+            remoteCarCountLabel.setText(Integer.toString(carCount));
         } catch (Exception ex) {
             log.error("Error refreshing remote roster", ex);
 
@@ -270,7 +280,7 @@ public class RailOpsSyncPanel extends JmriPanel implements PropertyChangeListene
         log.info("Created {} / Updated {} locomotives in remote roster",
                 upsertResponse.getCreatedCount(), upsertResponse.getUpdatedCount());
 
-        refreshRemoteRoster(collectionId); // TODO: maybe we should just set/add the created count?
+        refreshRemoteRoster(); // TODO: maybe we should just set/add the created count?
     }
 
     private static UpsertLocomotiveModel getUpsertLocomotiveModel(Engine engine, RosterEntry decoderEngine) {
@@ -339,7 +349,7 @@ public class RailOpsSyncPanel extends JmriPanel implements PropertyChangeListene
         log.info("Created {} / Updated {} cars in remote roster",
                 upsertResponse.getCreatedCount(), upsertResponse.getUpdatedCount());
 
-        refreshRemoteRoster(collectionId); // TODO: maybe we should just set/add the created count?
+        refreshRemoteRoster(); // TODO: maybe we should just set/add the created count?
     }
 
     @Override
@@ -354,7 +364,7 @@ public class RailOpsSyncPanel extends JmriPanel implements PropertyChangeListene
 
             log.debug("{} property change event fired; updating collection info", evt.getPropertyName());
             _apiUrlWarning.refresh();
-            refreshRemoteRoster(Roster.getCollectionId());
+            refreshRemoteRoster();
         }
     }
 
