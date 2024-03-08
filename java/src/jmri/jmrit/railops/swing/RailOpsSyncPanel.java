@@ -58,8 +58,9 @@ public class RailOpsSyncPanel extends JmriPanel implements PropertyChangeListene
         var list = new ArrayList<JMenu>();
 
         var menu = new JMenu();
-        menu.setText("Options");
+        menu.setText("RailOps");
 
+        menu.add(new OpenWebAppAction());
         menu.add(new RailOpsSettingsAction());
 
         list.add(menu);

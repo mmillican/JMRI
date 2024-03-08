@@ -23,7 +23,7 @@ import java.util.Locale;
 public class Bundle extends jmri.jmrit.Bundle {
 
     @CheckForNull
-    private static final String name = "jmri.jmrit.railops.Bundle"; // NOI18N
+    private static final String name = "jmri.jmrit.railops.RailOps"; // NOI18N
 
     //
     // below here is boilerplate to be copied exactly
@@ -37,7 +37,7 @@ public class Bundle extends jmri.jmrit.Bundle {
      * @param key Bundle key to be translated
      * @return Internationalized text
      */
-    static String getMessage(String key) {
+    public static String getMessage(String key) {
         return getBundle().handleGetMessage(key);
     }
 
@@ -51,7 +51,7 @@ public class Bundle extends jmri.jmrit.Bundle {
      * @param key    Bundle key to be translated
      * @return Internationalized text
      */
-    static String getMessage(Locale locale, String key) {
+    public static String getMessage(Locale locale, String key) {
         return getBundle().handleGetMessage(locale, key);
     }
 
@@ -68,7 +68,7 @@ public class Bundle extends jmri.jmrit.Bundle {
      * @param subs One or more objects to be inserted into the message
      * @return Internationalized text
      */
-    static String getMessage(String key, Object... subs) {
+    public static String getMessage(String key, Object... subs) {
         return getBundle().handleGetMessage(key, subs);
     }
 
@@ -86,7 +86,7 @@ public class Bundle extends jmri.jmrit.Bundle {
      * @param subs   One or more objects to be inserted into the message
      * @return Internationalized text
      */
-    static String getMessage(Locale locale, String key, Object... subs) {
+    public static String getMessage(Locale locale, String key, Object... subs) {
         return getBundle().handleGetMessage(locale, key, subs);
     }
 
