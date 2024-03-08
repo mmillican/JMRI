@@ -190,9 +190,12 @@ public class RailOpsSettingsPanel extends JmriPanel {
                 }
             }
 
-            if (Roster.getCollectionId() != 0 && collections.size() == 1) {
+            if (Roster.getCollectionId() == 0 && collections.size() == 1) {
+                log.info("No collection was set and only 1 was retrieved from API. Setting current collection to that.");
                 selectedCollection = collections.getFirst();
-                Roster.setCollectionId(selectedCollection.getCollectionId());
+                if (selectedCollection != null) {
+                    Roster.setCollectionId(selectedCollection.getCollectionId());
+                }
             }
 
             if (selectedCollection != null) {
