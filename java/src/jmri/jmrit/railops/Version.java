@@ -8,9 +8,10 @@ public class Version {
 
     static final public int major = Integer.parseInt(VERSION_BUNDLE.getString("version.major"));
     static final public int minor = Integer.parseInt(VERSION_BUNDLE.getString("version.minor"));
+    static final public int patch = Integer.parseInt(VERSION_BUNDLE.getString("version.patch"));
     static final public int build = Integer.parseInt(VERSION_BUNDLE.getString("version.build"));
 
     public static String getVersion() {
-        return String.format("%s.%s.%s", major, minor, build);
+        return String.format("%s.%s.%s.%s", major, minor, patch, build);
     }
 }
