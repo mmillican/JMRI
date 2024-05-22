@@ -305,7 +305,7 @@ public class DefaultLogixNGManager extends AbstractManager<LogixNG>
             for (GlobalVariable gv : globalVariables) {
                 try {
                     gv.initialize();
-                } catch (JmriException e) {
+                } catch (JmriException | IllegalArgumentException e) {
                     log.warn("Variable {} could not be initialized", gv.getUserName(), e);
                 }
             }
@@ -321,7 +321,7 @@ public class DefaultLogixNGManager extends AbstractManager<LogixNG>
                 logixNG.activate();
                 if (logixNG.isActive()) {
                     logixNG.registerListeners();
-                    logixNG.execute(false);
+                    logixNG.execute(false, true);
                     activeLogixNGs.add(logixNG);
                 } else {
                     logixNG.unregisterListeners();
@@ -338,7 +338,7 @@ public class DefaultLogixNGManager extends AbstractManager<LogixNG>
 
                 if (logixNG.isActive()) {
                     logixNG.registerListeners();
-                    logixNG.execute();
+                    logixNG.execute(true, true);
                 } else {
                     logixNG.unregisterListeners();
                 }

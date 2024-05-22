@@ -1,7 +1,6 @@
 package jmri.jmrix;
 
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
+import java.io.*;
 import java.util.Enumeration;
 import java.util.Vector;
 
@@ -11,7 +10,7 @@ import jmri.SystemConnectionMemo;
  * Provide an abstract base for *PortController classes.
  * <p>
  * The intent is to hide, to the extent possible, all the references to the
- * actual serial library in use within this class. Subclasses then 
+ * actual serial library in use within this class. Subclasses then
  * rely on methods here to maniplate the content of the
  * protected currentSerialPort variable/
  *
@@ -25,7 +24,7 @@ abstract public class AbstractSerialPortController extends AbstractPortControlle
         super(connectionMemo);
     }
 
-    protected com.fazecast.jSerialComm.SerialPort currentSerialPort = null;
+    protected SerialPort currentSerialPort = null;
 
     /**
      * Standard error handling for purejavacomm port-busy case.
@@ -63,14 +62,17 @@ abstract public class AbstractSerialPortController extends AbstractPortControlle
 
     /**
      * Standard error handling for the general port-not-found case.
+     * @param systemPrefix the system prefix
      * @param portName port name.
      * @param log system log, passed so logging comes from bottom level class
      * @param ex Underlying Exception that caused this failure
      * @return human readable string with error detail.
      */
-    final public String handlePortNotFound(String portName, org.slf4j.Logger log, Exception ex) {
+    public static String handlePortNotFound(String systemPrefix, String portName, org.slf4j.Logger log, Exception ex) {
         log.error("Serial port {} not found: {}", portName, ex.getMessage());
-        ConnectionStatus.instance().setConnectionState(this.getSystemPrefix(), portName, ConnectionStatus.CONNECTION_DOWN);
+        if (systemPrefix != null) {
+            ConnectionStatus.instance().setConnectionState(systemPrefix, portName, ConnectionStatus.CONNECTION_DOWN);
+        }
         return Bundle.getMessage("SerialPortNotFound", portName);
     }
 
@@ -89,17 +91,17 @@ abstract public class AbstractSerialPortController extends AbstractPortControlle
      * and purge the port's input stream.
      * <p>
      * Does not do the rest of the setup implied in the {@link #openPort} method.
-     * This is usually followed by calls to 
+     * This is usually followed by calls to
      * {@link #setBaudRate}, {@link #configureLeads} and {@link #setFlowControl}.
-     * 
+     *
      * @param portName local system name for the desired port
      * @param log Logger to use for errors, passed so that errors are logged from low-level class
      * @return the serial port object for later use
      */
-    final protected com.fazecast.jSerialComm.SerialPort activatePort(String portName, org.slf4j.Logger log) {
-        return this.activatePort(portName, log, 1); 
+    final protected SerialPort activatePort(String portName, org.slf4j.Logger log) {
+        return activatePort(this.getSystemPrefix(), portName, log, 1, Parity.NONE);
     }
-    
+
     /**
      * Do the formal opening of the port,
      * set the port for blocking reads without timeout,
@@ -107,17 +109,38 @@ abstract public class AbstractSerialPortController extends AbstractPortControlle
      * and purge the port's input stream.
      * <p>
      * Does not do the rest of the setup implied in the {@link #openPort} method.
-     * This is usually followed by calls to 
+     * This is usually followed by calls to
      * {@link #setBaudRate}, {@link #configureLeads} and {@link #setFlowControl}.
-     * 
+     *
      * @param portName local system name for the desired port
      * @param log Logger to use for errors, passed so that errors are logged from low-level class'
      * @param stop_bits The number of stop bits, either 1 or 2
      * @return the serial port object for later use
      */
-    final protected com.fazecast.jSerialComm.SerialPort activatePort(String portName, org.slf4j.Logger log, int stop_bits) {
-        com.fazecast.jSerialComm.SerialPort serialPort = null;
-        
+    final protected SerialPort activatePort(String portName, org.slf4j.Logger log, int stop_bits) {
+        return activatePort(this.getSystemPrefix(), portName, log, stop_bits, Parity.NONE);
+    }
+
+    /**
+     * Do the formal opening of the port,
+     * set the port for blocking reads without timeout,
+     * set the port to 8 data bits, the indicated number of stop bits and parity,
+     * and purge the port's input stream.
+     * <p>
+     * Does not do the rest of the setup implied in the {@link #openPort} method.
+     * This is usually followed by calls to
+     * {@link #setBaudRate}, {@link #configureLeads} and {@link #setFlowControl}.
+     *
+     * @param systemPrefix the system prefix
+     * @param portName local system name for the desired port
+     * @param log Logger to use for errors, passed so that errors are logged from low-level class'
+     * @param stop_bits The number of stop bits, either 1 or 2
+     * @param parity one of the defined parity contants
+     * @return the serial port object for later use
+     */
+    public static SerialPort activatePort(String systemPrefix, String portName, org.slf4j.Logger log, int stop_bits, Parity parity) {
+        com.fazecast.jSerialComm.SerialPort serialPort;
+
         // convert the 1 or 2 stop_bits argument to the proper jSerialComm code value
         int stop_bits_code;
         switch (stop_bits) {
@@ -130,24 +153,28 @@ abstract public class AbstractSerialPortController extends AbstractPortControlle
             default:
                 throw new IllegalArgumentException("Incorrect stop_bits argument: "+stop_bits);
         }
-                
+
         try {
             serialPort = com.fazecast.jSerialComm.SerialPort.getCommPort(portName);
             serialPort.openPort();
             serialPort.setComPortTimeouts(com.fazecast.jSerialComm.SerialPort.TIMEOUT_READ_BLOCKING, 0, 0);
             serialPort.setNumDataBits(8);
             serialPort.setNumStopBits(stop_bits_code);
-            serialPort.setParity(com.fazecast.jSerialComm.SerialPort.NO_PARITY);
+            serialPort.setParity(parity.getValue());
             purgeStream(serialPort.getInputStream());
         } catch (java.io.IOException | com.fazecast.jSerialComm.SerialPortInvalidPortException ex) {
-            // IOException includes 
+            // IOException includes
             //      com.fazecast.jSerialComm.SerialPortIOException
-            handlePortNotFound(portName, log, ex);
+            handlePortNotFound(systemPrefix, portName, log, ex);
             return null;
         }
-        return serialPort;
+        return new SerialPort(serialPort);
     }
-    
+
+    final protected void setComPortTimeouts(SerialPort serialPort, Blocking blocking, int timeout) {
+        serialPort.serialPort.setComPortTimeouts(blocking.getValue(), timeout, 0);
+    }
+
     /**
      * {@inheritDoc}
      */
@@ -189,7 +216,7 @@ abstract public class AbstractSerialPortController extends AbstractPortControlle
      *
      * @return the port names in the form they can later be used to open the port
      */
-    @SuppressWarnings("UseOfObsoleteCollectionType") // historical interface
+//    @SuppressWarnings("UseOfObsoleteCollectionType") // historical interface
     public static Vector<String> getActualPortNames() {
         // first, check that the comm package can be opened and ports seen
         var portNameVector = new Vector<String>();
@@ -233,12 +260,12 @@ abstract public class AbstractSerialPortController extends AbstractPortControlle
 
     /**
      * Set the baud rate on the port
-     * 
+     *
      * @param serialPort Port to be updated
      * @param baud baud rate to be set
      */
-    final protected void setBaudRate(com.fazecast.jSerialComm.SerialPort serialPort, int baud) {
-        serialPort.setBaudRate(baud);
+    final protected void setBaudRate(SerialPort serialPort, int baud) {
+        serialPort.serialPort.setBaudRate(baud);
     }
 
     /**
@@ -248,29 +275,86 @@ abstract public class AbstractSerialPortController extends AbstractPortControlle
      * @param rts        set RTS active if true
      * @param dtr        set DTR active if true
      */
-    final protected void configureLeads(com.fazecast.jSerialComm.SerialPort serialPort, boolean rts, boolean dtr) {
-        if (rts) { 
-            serialPort.setRTS();
+    final protected void configureLeads(SerialPort serialPort, boolean rts, boolean dtr) {
+        if (rts) {
+            serialPort.serialPort.setRTS();
         } else {
-            serialPort.clearRTS();
+            serialPort.serialPort.clearRTS();
         }
         if (dtr) {
-            serialPort.setDTR();
+            serialPort.serialPort.setDTR();
         } else {
-            serialPort.clearDTR();
+            serialPort.serialPort.clearDTR();
         }
 
+    }
+
+    /**
+     * Configure the port's parity
+     *
+     * @param serialPort Port to be updated
+     * @param parity the desired parity as one of the define static final constants
+     */
+    final protected void setParity(com.fazecast.jSerialComm.SerialPort serialPort, Parity parity) {
+        serialPort.setParity(parity.getValue());  // constants are defined with values for the specific port class
     }
 
     /**
      * Enumerate the possible flow control choices
      */
     public enum FlowControl {
-        NONE, 
+        NONE,
         RTSCTS,
         XONXOFF
     }
-    
+
+    /**
+     * Enumerate the possible parity choices
+     */
+    public enum Parity {
+        NONE(com.fazecast.jSerialComm.SerialPort.NO_PARITY),
+        EVEN(com.fazecast.jSerialComm.SerialPort.EVEN_PARITY),
+        ODD(com.fazecast.jSerialComm.SerialPort.ODD_PARITY);
+
+        private final int value;
+
+        Parity(int value) {
+            this.value = value;
+        }
+
+        public int getValue() {
+            return value;
+        }
+
+        public static Parity getParity(int parity) {
+            for (Parity p : Parity.values()) {
+                if (p.value == parity) {
+                    return p;
+                }
+            }
+            throw new IllegalArgumentException("Unknown parity");
+        }
+    }
+
+    /**
+     * Enumerate the possible timeout choices
+     */
+    public enum Blocking {
+        NONBLOCKING(com.fazecast.jSerialComm.SerialPort.TIMEOUT_NONBLOCKING),
+        READ_BLOCKING(com.fazecast.jSerialComm.SerialPort.TIMEOUT_READ_BLOCKING),
+        READ_SEMI_BLOCKING(com.fazecast.jSerialComm.SerialPort.TIMEOUT_READ_SEMI_BLOCKING);
+
+        private final int value;
+
+        Blocking(int value) {
+            this.value = value;
+        }
+
+        public int getValue() {
+            return value;
+        }
+    }
+
     /**
      * Configure the flow control settings. Keep this in synch with the
      * FlowControl enum.
@@ -278,63 +362,63 @@ abstract public class AbstractSerialPortController extends AbstractPortControlle
      * @param serialPort Port to be updated
      * @param flow  set which kind of flow control to use
      */
-    final protected void setFlowControl(com.fazecast.jSerialComm.SerialPort serialPort, FlowControl flow) {
+    final protected void setFlowControl(SerialPort serialPort, FlowControl flow) {
         lastFlowControl = flow;
-        
+
         boolean result = true;
-        
+
         if (null == flow) {
             log.error("Invalid null FlowControl enum member");
         } else switch (flow) {
             case RTSCTS:
-                result = serialPort.setFlowControl(com.fazecast.jSerialComm.SerialPort.FLOW_CONTROL_RTS_ENABLED
+                result = serialPort.serialPort.setFlowControl(com.fazecast.jSerialComm.SerialPort.FLOW_CONTROL_RTS_ENABLED
                         | com.fazecast.jSerialComm.SerialPort.FLOW_CONTROL_CTS_ENABLED );
                 break;
             case XONXOFF:
-                result = serialPort.setFlowControl(com.fazecast.jSerialComm.SerialPort.FLOW_CONTROL_XONXOFF_IN_ENABLED
+                result = serialPort.serialPort.setFlowControl(com.fazecast.jSerialComm.SerialPort.FLOW_CONTROL_XONXOFF_IN_ENABLED
                         | com.fazecast.jSerialComm.SerialPort.FLOW_CONTROL_XONXOFF_OUT_ENABLED);
                 break;
             case NONE:
-                result = serialPort.setFlowControl(com.fazecast.jSerialComm.SerialPort.FLOW_CONTROL_DISABLED);
+                result = serialPort.serialPort.setFlowControl(com.fazecast.jSerialComm.SerialPort.FLOW_CONTROL_DISABLED);
                 break;
             default:
                 log.error("Invalid FlowControl enum member: {}", flow);
                 break;
         }
-        
+
         if (!result) log.error("Port did not accept flow control setting {}", flow);
     }
-    
+
     private FlowControl lastFlowControl = FlowControl.NONE;
     /**
      * get the flow control mode back from the actual port.
      * @param serialPort Port to be examined
      * @return flow control setting observed in the port
      */
-    final protected FlowControl getFlowControl(com.fazecast.jSerialComm.SerialPort serialPort) {
+    final protected FlowControl getFlowControl(SerialPort serialPort) {
         // do a cross-check, just in case there's an issue
-        int nowFlow = serialPort.getFlowControlSettings();
-        
+        int nowFlow = serialPort.serialPort.getFlowControlSettings();
+
         switch (lastFlowControl) {
-        
+
             case NONE:
-                if (nowFlow != com.fazecast.jSerialComm.SerialPort.FLOW_CONTROL_DISABLED) 
+                if (nowFlow != com.fazecast.jSerialComm.SerialPort.FLOW_CONTROL_DISABLED)
                     log.error("Expected flow {} but found {}", lastFlowControl, nowFlow);
                 break;
             case RTSCTS:
                 if (nowFlow != (com.fazecast.jSerialComm.SerialPort.FLOW_CONTROL_RTS_ENABLED
-                                      | com.fazecast.jSerialComm.SerialPort.FLOW_CONTROL_CTS_ENABLED)) 
+                                      | com.fazecast.jSerialComm.SerialPort.FLOW_CONTROL_CTS_ENABLED))
                     log.error("Expected flow {} but found {}", lastFlowControl, nowFlow);
                 break;
             case XONXOFF:
                 if (nowFlow != (com.fazecast.jSerialComm.SerialPort.FLOW_CONTROL_XONXOFF_IN_ENABLED
-                                      | com.fazecast.jSerialComm.SerialPort.FLOW_CONTROL_XONXOFF_OUT_ENABLED)) 
+                                      | com.fazecast.jSerialComm.SerialPort.FLOW_CONTROL_XONXOFF_OUT_ENABLED))
                     log.error("Expected flow {} but found {}", lastFlowControl, nowFlow);
                 break;
             default:
                 log.warn("Unexpected FlowControl mode: {}", lastFlowControl);
         }
-    
+
         return lastFlowControl;
     }
 
@@ -343,16 +427,26 @@ abstract public class AbstractSerialPortController extends AbstractPortControlle
      * @param serialPort Port to be updated
      * @param serialPortDataListener the listener to add
      */
-    final protected void setDataListener(com.fazecast.jSerialComm.SerialPort serialPort,com.fazecast.jSerialComm.SerialPortDataListener serialPortDataListener){
-        currentSerialPort.addDataListener(serialPortDataListener);
+    final protected void setDataListener(SerialPort serialPort, SerialPortDataListener serialPortDataListener){
+        serialPort.serialPort.addDataListener(new com.fazecast.jSerialComm.SerialPortDataListener() {
+            @Override
+            public int getListeningEvents() {
+                return serialPortDataListener.getListeningEvents();
+            }
+
+            @Override
+            public void serialEvent(com.fazecast.jSerialComm.SerialPortEvent event) {
+                serialPortDataListener.serialEvent(new SerialPortEvent(event));
+            }
+        });
     }
 
     /**
      * Cleanly close the specified port
      * @param serialPort Port to be closed
      */
-    final protected void closeSerialPort(com.fazecast.jSerialComm.SerialPort serialPort){
-        serialPort.closePort();
+    final protected void closeSerialPort(SerialPort serialPort){
+        serialPort.serialPort.closePort();
     }
 
     /**
@@ -365,24 +459,24 @@ abstract public class AbstractSerialPortController extends AbstractPortControlle
     final protected void configureLeadsAndFlowControl(purejavacomm.SerialPort serialPort, int flow) {
         configureLeadsAndFlowControl(serialPort, flow, true, true);
     }
-    
-    /** 
-     * Report the connection status. 
+
+    /**
+     * Report the connection status.
      * Typically used after the connection is complete
      * @param log The low-level logger to get this reported against the right class
      * @param portName low-level name of selected port
      */
     final protected void reportPortStatus(org.slf4j.Logger log, String portName) {
         if (log.isInfoEnabled()) {
-            log.info("Port {} {} opened at {} baud, sees DTR: {} RTS: {} DSR: {} CTS: {} DCD: {} flow: {}", 
-                    portName, currentSerialPort.getDescriptivePortName(),
-                    currentSerialPort.getBaudRate(), currentSerialPort.getDTR(), 
-                    currentSerialPort.getRTS(), currentSerialPort.getDSR(), currentSerialPort.getCTS(),
-                    currentSerialPort.getDCD(), getFlowControl(currentSerialPort));
+            log.info("Port {} {} opened at {} baud, sees DTR: {} RTS: {} DSR: {} CTS: {} DCD: {} flow: {}",
+                    portName, currentSerialPort.serialPort.getDescriptivePortName(),
+                    currentSerialPort.serialPort.getBaudRate(), currentSerialPort.serialPort.getDTR(),
+                    currentSerialPort.serialPort.getRTS(), currentSerialPort.serialPort.getDSR(), currentSerialPort.serialPort.getCTS(),
+                    currentSerialPort.serialPort.getDCD(), getFlowControl(currentSerialPort));
         }
         if (log.isDebugEnabled()) {
             String stopBits;
-            switch (currentSerialPort.getNumStopBits()) {
+            switch (currentSerialPort.serialPort.getNumStopBits()) {
                 case com.fazecast.jSerialComm.SerialPort.TWO_STOP_BITS:
                     stopBits = "2";
                     break;
@@ -393,14 +487,14 @@ abstract public class AbstractSerialPortController extends AbstractPortControlle
                     stopBits = "unknown";
                     break;
             }
-            log.debug("     {} data bits, {} stop bits", 
-                    currentSerialPort.getNumDataBits(), stopBits);
+            log.debug("     {} data bits, {} stop bits",
+                    currentSerialPort.serialPort.getNumDataBits(), stopBits);
         }
-        
+
     }
-    
-   
-    // When PureJavaComm is removed, set this to 'final' to find 
+
+
+    // When PureJavaComm is removed, set this to 'final' to find
     // identical implementations in the subclasses - but note simulators are now overriding
     @Override
     public DataInputStream getInputStream() {
@@ -408,10 +502,10 @@ abstract public class AbstractSerialPortController extends AbstractPortControlle
             log.error("getInputStream called before open, stream not available");
             return null;
         }
-        return new DataInputStream(currentSerialPort.getInputStream());
+        return new DataInputStream(currentSerialPort.serialPort.getInputStream());
     }
- 
-    // When PureJavaComm is removed, set this to 'final' to find 
+
+    // When PureJavaComm is removed, set this to 'final' to find
     // identical implementations in the subclasses - but note simulators are now overriding
     @Override
     public DataOutputStream getOutputStream() {
@@ -419,7 +513,7 @@ abstract public class AbstractSerialPortController extends AbstractPortControlle
             log.error("getOutputStream called before open, stream not available");
         }
 
-        return new DataOutputStream(currentSerialPort.getOutputStream());
+        return new DataOutputStream(currentSerialPort.serialPort.getOutputStream());
     }
 
 
@@ -768,6 +862,129 @@ abstract public class AbstractSerialPortController extends AbstractPortControlle
 
         }
     }
+
+
+    public static class SerialPort {
+
+        public static final int LISTENING_EVENT_DATA_AVAILABLE =
+                com.fazecast.jSerialComm.SerialPort.LISTENING_EVENT_DATA_AVAILABLE;
+
+        public static final int ONE_STOP_BIT = com.fazecast.jSerialComm.SerialPort.ONE_STOP_BIT;
+        public static final int NO_PARITY = com.fazecast.jSerialComm.SerialPort.NO_PARITY;
+
+        private final com.fazecast.jSerialComm.SerialPort serialPort;
+
+        private SerialPort(com.fazecast.jSerialComm.SerialPort serialPort) {
+            this.serialPort = serialPort;
+        }
+
+        public void addDataListener(SerialPortDataListener listener) {
+            this.serialPort.addDataListener(new com.fazecast.jSerialComm.SerialPortDataListener() {
+                @Override
+                public int getListeningEvents() {
+                    return listener.getListeningEvents();
+                }
+
+                @Override
+                public void serialEvent(com.fazecast.jSerialComm.SerialPortEvent event) {
+                    listener.serialEvent(new SerialPortEvent(event));
+                }
+            });
+        }
+
+        public InputStream getInputStream() {
+            return this.serialPort.getInputStream();
+        }
+
+        public OutputStream getOutputStream() {
+            return this.serialPort.getOutputStream();
+        }
+
+        public void setRTS() {
+            this.serialPort.setRTS();
+        }
+
+        public void setBaudRate(int baudrate) {
+            this.serialPort.setBaudRate(baudrate);
+        }
+
+        public int getBaudRate() {
+            return this.serialPort.getBaudRate();
+        }
+
+        public void setNumDataBits(int bits) {
+            this.serialPort.setNumDataBits(bits);
+        }
+
+        public void setDTR() {
+            this.serialPort.setDTR();
+        }
+
+        public boolean getDTR() {
+            return this.serialPort.getDTR();
+        }
+
+        public boolean getRTS() {
+            return this.serialPort.getRTS();
+        }
+
+        public boolean getDSR() {
+            return this.serialPort.getDSR();
+        }
+
+        public boolean getCTS() {
+            return this.serialPort.getCTS();
+        }
+
+        public boolean getDCD() {
+            return this.serialPort.getDCD();
+        }
+
+        public void setBreak() {
+            this.serialPort.setBreak();
+        }
+
+        public void clearBreak() {
+            this.serialPort.clearBreak();
+        }
+
+        public void closePort() {
+            this.serialPort.closePort();
+        }
+
+        public String getDescriptivePortName() {
+            return this.serialPort.getDescriptivePortName();
+        }
+
+        @Override
+        public String toString() {
+            return this.serialPort.toString();
+        }
+
+    }
+
+
+    public static interface SerialPortDataListener {
+
+        void serialEvent(SerialPortEvent serialPortEvent);
+
+        public int getListeningEvents();
+
+    }
+
+    public static class SerialPortEvent {
+
+        private final com.fazecast.jSerialComm.SerialPortEvent event;
+
+        private SerialPortEvent(com.fazecast.jSerialComm.SerialPortEvent event) {
+            this.event = event;
+        }
+
+        public int getEventType() {
+            return event.getEventType();
+        }
+    }
+
 
     private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(AbstractSerialPortController.class);
 

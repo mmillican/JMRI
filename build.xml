@@ -140,7 +140,8 @@
         <pathelement location="${libdir}/commons-csv-1.9.0.jar"/>
         <pathelement location="${libdir}/jdom2-2.0.6.jar"/>
         <pathelement location="${libdir}/jhall.jar"/>
-        <pathelement location="${libdir}/jinput.jar"/>
+        <pathelement location="${libdir}/jinput-2.0.9-natives-all.jar"/>
+        <pathelement location="${libdir}/jinput-2.0.9.jar"/>
         <pathelement location="${libdir}/jmdns-3.5.5.jar"/>
         <pathelement location="${libdir}/openlcb.jar"/>
         <pathelement location="${libdir}/jlfgr-1_0.jar"/>
@@ -183,7 +184,6 @@
         <pathelement location="${libdir}/bluecove-2.1.1-SNAPSHOT.jar"/>
         <pathelement location="${libdir}/bluecove-bluez-2.1.1-SNAPSHOT.jar"/>
         <pathelement location="${libdir}/bluecove-gpl-2.1.1-SNAPSHOT.jar"/>
-        <pathelement location="${libdir}/jhidrawplugin.jar"/>
         <pathelement location="${libdir}/beansbinding-1.2.1.jar"/>
         <pathelement location="${libdir}/libusb4java-1.3.0-linux-aarch64.jar"/>
         <pathelement location="${libdir}/libusb4java-1.3.0-linux-arm.jar"/>
@@ -225,15 +225,15 @@
         <pathelement location="${libdir}/xml-apis-ext-1.3.04.jar"/>
         <pathelement location="${libdir}/xmlgraphics-commons-2.6.jar"/>
         <!-- //BiDiB client library -->
-        <pathelement location="${libdir}/jbidibc-core-2.0.16.jar"/>
-        <pathelement location="${libdir}/jbidibc-messages-2.0.16.jar"/>
-        <pathelement location="${libdir}/jbidibc-net-serial-over-tcp-2.0.16.jar"/>
-        <pathelement location="${libdir}/jbidibc-purejavacomm-2.0.16.jar"/>
-        <pathelement location="${libdir}/jbidibc-serial-2.0.16.jar"/>
-        <pathelement location="${libdir}/jbidibc-simulation-2.0.16.jar"/>
-        <pathelement location="${libdir}/bidibwizard-common-2.0.16.jar"/>
-        <pathelement location="${libdir}/bidibwizard-model-2.0.16.jar"/>
-        <pathelement location="${libdir}/bidibwizard-simulation-2.0.16.jar"/>
+        <pathelement location="${libdir}/jbidibc-core-2.0.18.jar"/>
+        <pathelement location="${libdir}/jbidibc-messages-2.0.18.jar"/>
+        <pathelement location="${libdir}/jbidibc-net-serial-over-tcp-2.0.18.jar"/>
+        <pathelement location="${libdir}/jbidibc-purejavacomm-2.0.18.jar"/>
+        <pathelement location="${libdir}/jbidibc-serial-2.0.18.jar"/>
+        <pathelement location="${libdir}/jbidibc-simulation-2.0.18.jar"/>
+        <pathelement location="${libdir}/bidibwizard-common-2.0.18.jar"/>
+        <pathelement location="${libdir}/bidibwizard-model-2.0.18.jar"/>
+        <pathelement location="${libdir}/bidibwizard-simulation-2.0.18.jar"/>
         <!-- BiDiB dependencies -->
         <pathelement location="${libdir}/commons-collections4-4.4.jar"/>
         <pathelement location="${libdir}/eventbus-1.4.jar"/>
@@ -371,7 +371,7 @@
 
     <!-- Java Code Coverage -->
     <taskdef uri="antlib:org.jacoco.ant" resource="org/jacoco/ant/antlib.xml">
-        <classpath path="lib/org.jacoco.ant-0.8.5-nodeps.jar" />
+        <classpath path="lib/org.jacoco.ant-0.8.11-nodeps.jar" />
     </taskdef>
 
     <!-- fileset for the jacoco targets. -->
@@ -1180,8 +1180,6 @@
             <sysproperty key="file.encoding" value="UTF-8"/>
             <sysproperty key="java.library.path"
                          path=".:${arch.lib.path}:${libdir}"/>
-            <sysproperty key="jinput.plugins"
-                         path="net.bobis.jinput.hidraw.HidRawEnvironmentPlugin"/><!-- not in tests, left here for historical reasons -->
             <sysproperty key="purejavacomm.loglevel" value="${purejavacomm.loglevel}"/>
             <jvmarg value="-Xms256m"/>
             <jvmarg value="-Xmx640m"/>
@@ -1213,8 +1211,6 @@
             <sysproperty key="log4j.ignoreTCL" path="true/"/>
             <sysproperty key="java.library.path"
                          path=".:${arch.lib.path}:${libdir}"/>
-            <sysproperty key="jinput.plugins"
-                         path="net.bobis.jinput.hidraw.HidRawEnvironmentPlugin"/><!-- not in tests, left here for historical reasons -->
             <sysproperty key="purejavacomm.loglevel" value="${purejavacomm.loglevel}"/>
 
             <jvmarg value="-Xdebug"/>
@@ -1340,8 +1336,6 @@
             <sysproperty key="file.encoding" value="UTF-8"/>
             <sysproperty key="java.library.path"
                          path=".:${arch.lib.path}:${libdir}"/>
-            <sysproperty key="jinput.plugins"
-                         path="net.bobis.jinput.hidraw.HidRawEnvironmentPlugin"/>
             <jvmarg value="-Xms256m"/>
             <jvmarg value="-Xmx640m"/>
 
@@ -1373,7 +1367,6 @@
             <sysproperty key="apple.laf.useScreenMenuBar" value="true"/>
             <sysproperty key="log4j.ignoreTCL" path="true/"/>
             <sysproperty key="java.library.path" path=".:${libdir}:${arch.lib.path}"/>
-            <!-- <sysproperty key="jinput.plugins" path="net.bobis.jinput.hidraw.HidRawEnvironmentPlugin"/> no longer specify specific library -->
             <jvmarg line="${jvm.args}"/>
             <arg value="${antargline}"/>
         </java>
@@ -1727,7 +1720,6 @@
             <sysproperty key="jmri.prefsdir" path="${tempdir}"/>
             <sysproperty key="jmri.shutdownmanager" value="jmri.util.MockShutDownManager" />
             <sysproperty key="jmri.skipBuildHelpFilesTest" value="true"/><!-- skip BuildHelpFilesTest test -->
-            <!-- <sysproperty key="jinput.plugins" path="net.bobis.jinput.hidraw.HidRawEnvironmentPlugin"/> no longer specify specific library -->
 
             <sysproperty key="user.language" value="en"/>
         <sysproperty key="user.country" value="US"/>
@@ -2042,7 +2034,6 @@
             <arg value="-Dlog4j.ignoreTCL=true/"/>
             <arg value="-Dfile.encoding=UTF-8"/>
             <arg value="-Djava.library.path.:${arch.lib.path}:${libdir}"/>
-            <arg value="-Djinput.plugins=net.bobis.jinput.hidraw.HidRawEnvironmentPlugin"/><!-- not in tests, left here for historical reasons -->
 
             <arg value="apps.PanelPro.PanelPro"/>
             <arg value="PanelPro"/>
@@ -2114,11 +2105,7 @@
 
             <link href="https://fazecast.github.io/jSerialComm/javadoc" />
             
-            <!-- <link href="http://download.java.net/media/java3d/javadoc/1.3.2/"/>  redirected to next line -->
-            <link href="https://download.java.net/media/java3d/javadoc/1.3.2/" />
-
-            <!-- <link href="https://static.javadoc.io/org.openlcb/openlcb/0.7.23/"/>  redirected to next line -->
-            <link href="https://www.javadoc.io/doc/org.openlcb/openlcb/0.7.23/" />
+            <link href="https://www.javadoc.io/doc/org.openlcb/openlcb/latest/" />
 
             <!-- <link href="https://static.javadoc.io/com.github.purejavacomm/purejavacomm/1.0.1.RELEASE/" packagelistLoc="lib/purejavacomm-1.0.1-package-list"/>  redirected to next line -->
             <link href="https://www.javadoc.io/doc/com.github.purejavacomm/purejavacomm/1.0.1.RELEASE/" packagelistLoc="lib/purejavacomm-1.0.1-package-list"/>
@@ -2225,8 +2212,7 @@
 
             <link href="https://fazecast.github.io/jSerialComm/javadoc" />
 
-            <!-- <link href="http://download.java.net/media/java3d/javadoc/1.3.2/"/>  redirected to next line -->
-            <link href="https://download.java.net/media/java3d/javadoc/1.3.2/" />
+            <link href="https://www.javadoc.io/doc/org.openlcb/openlcb/latest/" />
 
             <link href="http://docs.oracle.com/en/java/javase/11/docs/api/"/>
             <link href="http://www.jdom.org/docs/apidocs/"/>
@@ -2238,7 +2224,6 @@
             <link offline="true" href="https://static.javadoc.io/com.alexandriasoftware.swing/jinputvalidator/0.8.0/" packagelistLoc="lib/jinputvalidator-0.8.0-package-list"/>
             <link offline="true" href="https://static.javadoc.io/com.tngtech.archunit/archunit/0.11.0/" packagelistLoc="lib/archunit-0.11.0-package-list"/>
 
-            <link offline="true" href="https://www.javadoc.io/doc/org.openlcb/openlcb/0.7.23/" packagelistLoc="openlcb-0.7.23-package-list"/>
             <link offline="true" href="https://www.javadoc.io/doc/com.github.purejavacomm/purejavacomm/1.0.1.RELEASE/" packagelistLoc="lib/purejavacomm-1.0.1-package-list"/>
             <link offline="true" href="https://www.javadoc.io/doc/com.alexandriasoftware.swing/jsplitbutton/1.3.1/" packagelistLoc="lib/jsplitbutton-1.3.1-package-list"/>
              <link href="https://javadoc.io/static/com.github.spotbugs/spotbugs-annotations/4.7.3/"/>

@@ -9,7 +9,7 @@
         group.
         </p>
 
-        <p>Copyright &copy; 1997 - 2023 JMRI Community.
+        <p>Copyright &copy; 1997 - 2024 JMRI Community.
         JMRI&reg;, DecoderPro&reg;, PanelPro&trade;, DispatcherPro&trade;, OperationsPro&trade;, SignalPro&trade;, SoundPro&trade;, TrainPro&trade;, Logix&trade;, LogixNG&trade; and associated logos are our trademarks.
         <a href="/copyright.shtml">Additional information on copyright, trademarks and licenses is linked here.</a>
         </p>
@@ -29,8 +29,7 @@
             } else { // must be in JMRI/website
                 target = "https://github.com/JMRI/website/blob/master"+target;
             }
-            //document.write(target+" ")
-//            document.write("<a href=\""+target+"\" title=\"File history on GitHub.com\">history of this page and propose edits</a>.")
+            document.write("<a href=\""+target+"\" title=\"File history on GitHub.com\">history of this page and propose edits</a>.")
         </script>
         </p>
 

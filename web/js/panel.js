@@ -12,7 +12,7 @@
  *    Switch widgets are handled by drawing directly on an individual javascript "canvas", placed in a flexbox layout.
  *
  *  See java/src/jmri/server/json/JsonNamedBeanSocketService.java#onMessage() for GET method that adds a listener.
- *  See JMRI Web Server - Panel Servlet in help/en/html/web/PanelServlet.shtmlHelp for an example description of
+ *  See JMRI Web Server - Panel Servlet in help/en/html/web/PanelServlet.shtml for an example description of
  *  the interaction between the Web Servlets, the Web Browser and the JMRI application.
  *
  *  TODO: show error dialog while retrying connection
@@ -189,14 +189,7 @@ function processPanelXML($returnedData, $success, $xhr) {
 
     // insert the canvas layer and set up context used by LayoutEditor "drawn" objects, set some defaults
     if ($gPanel.paneltype == "LayoutPanel") {
-        $("#panel-area").prepend("<canvas id='panelCanvas' width=" + $gPanel.panelwidth + "px height=" +
-            $gPanel.panelheight + "px style='position:absolute;z-index:2;'>");
-        var canvas = document.getElementById("panelCanvas");
-        $gCtx = canvas.getContext("2d");
-        $gCtx.strokeStyle = $gPanel.defaulttrackcolor;
-        $gCtx.lineWidth = $gPanel.sidelinetrackwidth;
-        //set background color from panel attribute (single hex value)
-        $("#panel-area").css({'background-color': $gPanel.backgroundcolor});
+        createPanelCanvas(); //insure canvas layer is available for drawing
     }
 
     // set up context used by SwitchboardEditor "beanswitch" objects, set some defaults
@@ -1202,8 +1195,10 @@ function processPanelXML($returnedData, $success, $xhr) {
                             //copy and reformat some attributes from children into object
                             $widget['width'] = $(this).find('size').attr('width');
                             $widget['height'] = $(this).find('size').attr('height');
-                            $widget['cornerRadius'] = 0; //default to no corner
                             $widget['cornerRadius'] = $(this).find('size').attr('cornerRadius');
+                            if (isUndefined($widget['cornerRadius'])) {
+                                $widget['cornerRadius'] = 0; //default to no corner
+                            }                             
                             lc = $(this).find('lineColor');
                             $widget['lineColor'] = 
                                 'rgba('+lc.attr('red')+','+lc.attr('green')+',' +
@@ -1217,6 +1212,31 @@ function processPanelXML($returnedData, $success, $xhr) {
                             $gWidgets[$widget.id] = $widget;
                             //draw the positionableRoundRect
                             $drawPositionableRoundRect($widget);
+                            break;
+                        case "positionableCircle" : //identical except circle has size radius, 
+                        case "positionableEllipse" : //ellipse has size width height
+                            //copy and reformat some attributes from children into object
+                            $widget['radius'] = ($(this).find('size').attr('radius'));
+                            if (isDefined($widget['radius'])) {
+                                $widget['height'] = $widget.radius; //use radius for height if populated
+                                $widget['width']  = $widget.radius; //use radius for width if populated                               
+                            } else {                            
+                                $widget['height'] = ($(this).find('size').attr('height'));
+                                $widget['width']  = ($(this).find('size').attr('width'));
+                            }
+                            lc = $(this).find('lineColor');
+                            $widget['lineColor'] = 
+                                'rgba('+lc.attr('red')+','+lc.attr('green')+',' +
+                                lc.attr('blue')+','+lc.attr('alpha')/256+')';
+                            fc = $(this).find('fillColor');
+                            $widget['fillColor'] = 
+                                 'rgba('+fc.attr('red')+','+fc.attr('green')+',' + 
+                                fc.attr('blue')+','+fc.attr('alpha')/256+')';
+                            //store this widget in persistent array, with ident as key
+                            $widget['id'] = $widget.ident;
+                            $gWidgets[$widget.id] = $widget;
+                            //draw the positionableEllipse
+                            $drawPositionableEllipse($widget);
                             break;
                         default:
                             log.warn("unknown $widget.widgetType: " + $widget.widgetType + ".");
@@ -2398,6 +2418,8 @@ var $getWidgetFamily = function($widget, $element) {
         case "layoutShape" :
         case "positionableRectangle" :
         case "positionableRoundRect" :
+        case "positionableCircle" :
+        case "positionableEllipse" :
             return "drawn";
             break;
         case "beanswitch" :
@@ -2874,8 +2896,8 @@ function $drawTrackSegment($widget) {
         $width = $gPanel.mainlinetrackwidth;
     }
 
-    //set trackcolor based on blockcolor
-    var $color = $gPanel.defaulttrackcolor;
+    var $color = $getTrackColor($widget);
+
     var $blk = $gBlks[$widget.blockname];
     if (isDefined($blk)) {
         $color = $blk.blockcolor;
@@ -3050,7 +3072,7 @@ function $drawTurntable($widget) {
         var $t1 = [];
         $t1['x'] = $t.x - (($t.x - $txcen) * f);
         $t1['y'] = $t.y - (($t.y - $tycen) * f);
-        $drawLine($t1.x, $t1.y, $t.x, $t.y, $gPanel.defaulttrackcolor, $gPanel.sidelinetrackwidth);
+        $drawLine($t1.x, $t1.y, $t.x, $t.y, $getTrackColor($widget), $gPanel.sidelinetrackwidth);
 
         if (isDefined(item.attributes.turnout) && ($gPanel.controlling == "yes")) {
             // var turnout = item.attributes.turnout.value;
@@ -3078,7 +3100,7 @@ function $drawTurntable($widget) {
             $t2['x'] = $txcen - ($tr * Math.sin($angle));
             $t2['y'] = $tycen + ($tr * Math.cos($angle));
             if (drawFlag) {
-                $drawLine($t1.x, $t1.y, $t2.x, $t2.y, $gPanel.defaulttrackcolor, $gPanel.sidelinetrackwidth);
+                $drawLine($t1.x, $t1.y, $t2.x, $t2.y, $getTrackColor($widget), $gPanel.sidelinetrackwidth);
             } else {
                 $drawLine($t1.x, $t1.y, $t2.x, $t2.y, $gPanel.backgroundcolor, $gPanel.sidelinetrackwidth);
             }
@@ -3086,8 +3108,8 @@ function $drawTurntable($widget) {
     });
 
     var $turntablecirclelinewidth = 2; //matches LayoutTurntableView.java
-    $drawCircle($txcen, $tycen, $tr, $gPanel.defaulttrackcolor, $turntablecirclelinewidth);
-    $drawCircle($txcen, $tycen, $tr / 4, $gPanel.defaulttrackcolor, $turntablecirclelinewidth);
+    $drawCircle($txcen, $tycen, $tr, $getTrackColor($widget), $turntablecirclelinewidth);
+    $drawCircle($txcen, $tycen, $tr / 4, $getTrackColor($widget), $turntablecirclelinewidth);
 }   //$drawTurntable
 
 //draw a LevelXing (pass in widget)
@@ -3096,44 +3118,11 @@ function $drawLevelXing($widget) {
     if ($widget.hidden == "yes") {
         return;
     }
-    //get track widths
-    var $widthAC = $gPanel.sidelinetrackwidth;
-    if (isDefined($gWidgets[$widget.connectaname])) {
-        if ($gWidgets[$widget.connectaname].mainline == "yes") {
-            $widthAC = $gPanel.mainlinetrackwidth;
-        }
-    }
-    if (isDefined($gWidgets[$widget.connectcname])) {
-        if ($gWidgets[$widget.connectcname].mainline == "yes") {
-            $widthAC = $gPanel.mainlinetrackwidth;
-        }
-    }
-
-    var $widthBD = $gPanel.sidelinetrackwidth;
-    if (isDefined($gWidgets[$widget.connectbname])) {
-        if ($gWidgets[$widget.connectbname].mainline == "yes") {
-            $widthBD = $gPanel.mainlinetrackwidth;
-        }
-    }
-    if (isDefined($gWidgets[$widget.connectdname])) {
-        if ($gWidgets[$widget.connectdname].mainline == "yes") {
-            $widthBD = $gPanel.mainlinetrackwidth;
-        }
-    }
-
-    //  set trackcolor and width based on block
-    var $colorAC = $gPanel.defaulttrackcolor;
-    var $blkAC = $gBlks[$widget.blocknameac];
-    if (isDefined($blkAC)) {
-        $colorAC = $blkAC.blockcolor;
-        $widthAC = $gPanel.sidelineblockwidth;
-    }
-    var $colorBD = $gPanel.defaulttrackcolor;
-    var $blkBD = $gBlks[$widget.blocknamebd];
-    if (isDefined($blkBD)) {
-        $colorBD = $blkBD.blockcolor;
-        $widthBD = $gPanel.sidelineblockwidth;
-    }
+    //set colors and widths based on connected segments and blocks
+    var $colorAC = $getLegColor($gWidgets[$widget.connectaname], $widget.blocknameac);
+    var $colorBD = $getLegColor($gWidgets[$widget.connectbname], $widget.blocknamebd);
+    var $widthAC = $getLegWidth($gWidgets[$widget.connectaname], $widget.blocknameac);
+    var $widthBD = $getLegWidth($gWidgets[$widget.connectbname], $widget.blocknamebd);
 
     //retrieve the points
     var cen = [$widget.xcen, $widget.ycen];
@@ -3151,72 +3140,33 @@ function $drawLevelXing($widget) {
 
 //draw a Turnout (pass in widget)
 //  see LayoutTurnout.draw()
+// colors and widths based on side vs main then block color, turnout can be all one block, or several blocks
 function $drawTurnout($widget) {
     //if set to hidden, don't draw anything
     if ($widget.hidden == "yes") {
         return;
     }
-
-    //get widths
-    var $sideWidth = $gPanel.sidelinetrackwidth;
-    var $mainWidth = $gPanel.mainlinetrackwidth;
-    var $widthA = $sideWidth;
-    if (isDefined($gWidgets[$widget.connectaname])) {
-        if ($gWidgets[$widget.connectaname].mainline == "yes") {
-            $widthA = $mainWidth;
-        }
-    }
-    var $widthB = $sideWidth;
-    if (isDefined($gWidgets[$widget.connectbname])) {
-        if ($gWidgets[$widget.connectbname].mainline == "yes") {
-            $widthB = $mainWidth;
-        }
-    }
-    var $widthC = $sideWidth;
-    if (isDefined($gWidgets[$widget.connectcname])) {
-        if ($gWidgets[$widget.connectcname].mainline == "yes") {
-            $widthC = $mainWidth;
-        }
-    }
-    var $widthD = $sideWidth;
-    if (isDefined($gWidgets[$widget.connectdname])) {
-        if ($gWidgets[$widget.connectdname].mainline == "yes") {
-            $widthD = $mainWidth;
-        }
-    }
-
-    //get colors
+ 
+    //set erase color and width
     var $eraseColor = $gPanel.backgroundcolor;
-    var $trackColor = $gPanel.defaulttrackcolor;
+    var $eraseWidth = $gPanel.mainlinetrackwidth;
+ 
+    //set colors and widths based on connected segments and blocks
+    var $colorA = $getLegColor($gWidgets[$widget.connectaname], $widget.blockname);
+    var $colorB = $getLegColor($gWidgets[$widget.connectbname], 
+        ($widget.blockbname ? $widget.blockbname : $widget.blockname)); //use bname if set
+    var $colorC = $getLegColor($gWidgets[$widget.connectcname], 
+        ($widget.blockcname ? $widget.blockcname : $widget.blockname)); //use cname if set
+    var $colorD = $getLegColor($gWidgets[$widget.connectdname], 
+        ($widget.blockdname ? $widget.blockdname : $widget.blockname)); //use dname if set
 
-    //set track colors and widths based on block colors, use A if others not populated
-    var $colorA = $trackColor;
-    var $blkA = $gBlks[$widget.blockname];
-    if (isDefined($blkA)) {
-        $colorA = $blkA.blockcolor;
-        $widthA = $gPanel.sidelineblockwidth;
-    }
-    var $colorB = $colorA;
-    var $widthB = $widthA;
-    var $blkB = $gBlks[$widget.blockbname];
-    if (isDefined($blkB)) {
-        $colorB = $blkB.blockcolor;
-        $widthB = $gPanel.sidelineblockwidth;
-    }
-    var $colorC = $colorA;
-    var $widthC = $widthA;
-    var $blkC = $gBlks[$widget.blockcname];
-    if (isDefined($blkC)) {
-        $colorC = $blkC.blockcolor;
-        $widthC = $gPanel.sidelineblockwidth;
-    }
-    var $colorD = $colorA;
-    var $widthD = $widthA;
-    var $blkD = $gBlks[$widget.blockdname];
-    if (isDefined($blkD)) {
-        $colorD = $blkD.blockcolor;
-        $widthD = $gPanel.sidelineblockwidth;
-    }
+    var $widthA = $getLegWidth($gWidgets[$widget.connectaname], $widget.blockname);
+    var $widthB = $getLegWidth($gWidgets[$widget.connectbname], 
+        ($widget.blockbname ? $widget.blockbname : $widget.blockname)); //use bname if set
+    var $widthC = $getLegWidth($gWidgets[$widget.connectcname], 
+        ($widget.blockcname ? $widget.blockcname : $widget.blockname)); //use cname if set
+    var $widthD = $getLegWidth($gWidgets[$widget.connectdname], 
+        ($widget.blockdname ? $widget.blockdname : $widget.blockname)); //use dname if set
 
     var cen = [$widget.xcen * 1, $widget.ycen * 1]
     var a = $getPoint($widget.ident + ".TURNOUT_A");
@@ -3236,13 +3186,13 @@ function $drawTurnout($widget) {
             if ($widget.state == $widget.continuing) {
                 $drawLineP(cen, c, $eraseColor, $widthC); //erase center to C (diverging leg)
                 if ($gPanel.turnoutdrawunselectedleg == 'yes') {
-                    $drawLineP(c, $point_midpoint(cen, c), $colorB, $widthC); //C to midC (diverging leg)
+                    $drawLineP(c, $point_midpoint(cen, c), $colorC, $widthC); //C to midC (diverging leg)
                 }
                 $drawLineP(cen, b, $colorB, $widthB); //center to B (straight leg)
             } else {
                     $drawLineP(cen, b, $eraseColor, $widthB); //erase center to B (straight leg)
                 if ($gPanel.turnoutdrawunselectedleg == 'yes') {
-                    $drawLineP(b, $point_midpoint(cen, b), $colorC, $widthB); //B to midB (straight leg)
+                    $drawLineP(b, $point_midpoint(cen, b), $colorB, $widthB); //B to midB (straight leg)
                 }
                 $drawLineP(cen, c, $colorC, $widthC); //center to C (diverging leg)
             }
@@ -3259,11 +3209,11 @@ function $drawTurnout($widget) {
         var cd = $point_midpoint(c, d);
 
         if ($widget.state == CLOSED || $widget.state == THROWN) {
-            $drawLineP(a, b, $eraseColor, $mainWidth);      //erase A to B
-            $drawLineP(c, d, $eraseColor, $mainWidth);      //erase C to D
-            $drawLineP(ab, cd, $eraseColor, $mainWidth);    //erase midAB to midDC
-            $drawLineP(a, c, $eraseColor, $mainWidth);      //erase A to C
-            $drawLineP(b, d, $eraseColor, $mainWidth);      //erase B to D
+            $drawLineP(a, b, $eraseColor, $eraseWidth);      //erase A to B
+            $drawLineP(c, d, $eraseColor, $eraseWidth);      //erase C to D
+            $drawLineP(ab, cd, $eraseColor, $eraseWidth);    //erase midAB to midDC
+            $drawLineP(a, c, $eraseColor, $eraseWidth);      //erase A to C
+            $drawLineP(b, d, $eraseColor, $eraseWidth);      //erase B to D
             if ($widget.state == $widget.continuing) {
                 //draw closed legs
                 $drawLineP(a, ab, $colorA, $widthA);    //A to mid ab
@@ -3374,6 +3324,57 @@ function $drawTurnout($widget) {
     }
 }   // function $drawTurnout($widget)
 
+// compute width of turnout leg based on connected segment, then block type
+function $getLegWidth(cs, bn) {
+    var width = $gPanel.sidelinetrackwidth;
+    if (isDefined(cs)) {
+        if (cs.mainline == "yes") {
+            width = $gPanel.mainlinetrackwidth;
+        }
+        var blk = $gBlks[bn];
+        if (isDefined(blk)) {
+            if (cs.mainline=="yes") {        
+                width = $gPanel.mainlineblockwidth;;
+            } else {
+                width = $gPanel.sidelineblockwidth;;
+            }
+        }
+    }
+    return width;
+}
+
+// compute color of turnout leg based on connected segment, then its block color
+function $getLegColor(cs, bn) {
+    var color = $gPanel.defaulttrackcolor;
+    if (isDefined(cs)) {
+        if (isDefined($gPanel.mainRailColor) && (cs.mainline == "yes")) {
+            color = $gPanel.mainRailColor;
+        } else {
+            if (isDefined($gPanel.sideRailColor)) {
+                color = $gPanel.sideRailColor;
+            }
+        }
+        var blk = $gBlks[bn];
+        if (isDefined(blk)) {
+            color = blk.blockcolor;
+        }
+    }
+    return color;
+       
+}   // function $getLegColor()
+
+//set trackcolor by default, then main/side
+var $getTrackColor = function(e) {
+    var color = $gPanel.defaulttrackcolor;
+    if (isDefined($gPanel.mainRailColor) && (e.mainline == "yes")) {
+        color = $gPanel.mainRailColor;
+    }
+    if (isDefined($gPanel.sideRailColor) && (e.mainline != "yes")) {
+        color = $gPanel.sideRailColor;
+    }
+    return color;
+}
+
 //draw a Slip (pass in widget)
 //  see LayoutSlip.draw()
 function $drawSlip($widget) {
@@ -3423,7 +3424,7 @@ function $drawSlip($widget) {
     var d = $getPoint($widget.ident + SLIP_D);
 
     var $eraseColor = $gPanel.backgroundcolor;
-    var $trackColor = $gPanel.defaulttrackcolor;
+    var $trackColor = $getTrackColor($widget);
 
     var $blkA = $gBlks[$widget.blockname];
     var $colorA = isDefined($blkA) ? $blkA.blockcolor : $trackColor;
@@ -3563,14 +3564,8 @@ function $drawSlip($widget) {
 
 function $drawPositionableRoundRect($widget) {
     //log.log("drawing PositionableRoundRect")
-    if ($gCtx == undefined) {  //create context if needed for drawing
-        $("#panel-area").prepend("<canvas id='panelCanvas' width=" + $gPanel.panelwidth + "px height=" +
-            $gPanel.panelheight + "px style='position:absolute;z-index:2;'>");
-        var canvas = document.getElementById("panelCanvas");
-        $gCtx = canvas.getContext("2d");
-        $gCtx.strokeStyle = $gPanel.defaulttrackcolor;
-        $gCtx.lineWidth = $gPanel.sidelinetrackwidth;
-    }
+    createPanelCanvas(); //insure canvas layer is available for drawing
+
     $gCtx.save();   // save current line width and color
 
     if (isDefined($widget.lineColor)) {
@@ -3584,12 +3579,40 @@ function $drawPositionableRoundRect($widget) {
     }
 
     $gCtx.beginPath();
+//    $gCtx.rotate($toRadians($widget.degrees));
     $gCtx.roundRect($widget.x, $widget.y, $widget.width, $widget.height, $widget.cornerRadius);
     $gCtx.stroke()
     $gCtx.fill()
     $gCtx.restore();        // restore color and width back to default
 
 }   // function $drawPositionableRoundRect($widget)
+
+function $drawPositionableEllipse($widget) {
+    //log.log("drawing PositionableEllipse");
+    createPanelCanvas(); //insure canvas layer is available for drawing
+
+    $gCtx.save();   // save current line width and color
+
+    if (isDefined($widget.lineColor)) {
+        $gCtx.strokeStyle = $widget.lineColor;
+    }
+    if (isDefined($widget.fillColor)) {
+        $gCtx.fillStyle = $widget.fillColor;
+    }
+    if (isDefined($widget.lineWidth)) {
+        $gCtx.lineWidth = $widget.lineWidth;
+    }
+    rw = $widget.width/2;
+    rh = $widget.height/2;
+    x  = $widget.x * 1.0;
+    y  = $widget.y * 1.0;
+    $gCtx.beginPath();
+    $gCtx.ellipse(x + rw, y + rh, rw, rh, $toRadians($widget.degrees), 0, 2 * Math.PI);    
+    $gCtx.stroke()
+    $gCtx.fill()
+    $gCtx.restore();        // restore color and width back to default
+
+}   // function $drawPositionableEllipse($widget)
 
 function $drawLayoutShape($widget) {
     var $pts = $widget.points;   // get the points
@@ -4209,6 +4232,19 @@ var $drawAllSwitchIcons = function() {
                 break;
         }
     });
+};
+
+function createPanelCanvas() {
+    if ($gCtx == undefined) {  //create canvas if not already created
+        $("#panel-area").prepend("<canvas id='panelCanvas' width=" + $gPanel.panelwidth + "px height=" +
+            $gPanel.panelheight + "px style='position:absolute;z-index:2;'>");
+        var canvas = document.getElementById("panelCanvas");
+        $gCtx = canvas.getContext("2d");
+        $gCtx.strokeStyle = $gPanel.defaulttrackcolor;
+        $gCtx.lineWidth = $gPanel.sidelinetrackwidth;
+        //set background color from panel attribute (single hex value)
+        $("#panel-area").css({'background-color': $gPanel.backgroundcolor});
+    }    
 };
 
 function updateWidgets(name, state, data) {
