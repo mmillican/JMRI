@@ -238,7 +238,7 @@ public class ThrottleFrame extends JDesktopPane implements ComponentListener, Ad
         JFileChooser fileChooser = jmri.jmrit.XmlFile.userFileChooser(Bundle.getMessage("PromptXmlFileTypes"), "xml");
         fileChooser.setCurrentDirectory(new File(getDefaultThrottleFolder()));
         fileChooser.setDialogType(JFileChooser.OPEN_DIALOG);
-        java.io.File file = LoadXmlConfigAction.getFile(fileChooser);
+        java.io.File file = LoadXmlConfigAction.getFile(fileChooser, this);
         if (file == null) {
             return ;
         }
@@ -524,6 +524,7 @@ public class ThrottleFrame extends JDesktopPane implements ComponentListener, Ad
         functionPanel.applyPreferences();
         addressPanel.applyPreferences();
         backgroundPanel.applyPreferences();
+        loadDefaultThrottle();
     }
 
     private static class TranslucentJPanel extends JPanel {
@@ -639,8 +640,8 @@ public class ThrottleFrame extends JDesktopPane implements ComponentListener, Ad
                 Bundle.getMessage("ThrottleFrameNoRosterItemTitleDialog"), JmriJOptionPane.ERROR_MESSAGE);
             return;
         }
-        if (JmriJOptionPane.showConfirmDialog(this, Bundle.getMessage("ThrottleFrameRosterChangeMesageDialog"),
-            Bundle.getMessage("ThrottleFrameRosterChangeTitleDialog"), JmriJOptionPane.YES_NO_OPTION) != JmriJOptionPane.YES_OPTION) {
+        if ((!InstanceManager.getDefault(ThrottlesPreferences.class).isSavingThrottleOnLayoutSave()) && (JmriJOptionPane.showConfirmDialog(this, Bundle.getMessage("ThrottleFrameRosterChangeMesageDialog"),
+            Bundle.getMessage("ThrottleFrameRosterChangeTitleDialog"), JmriJOptionPane.YES_NO_OPTION) != JmriJOptionPane.YES_OPTION)) {
             return;
         }
         functionPanel.saveFunctionButtonsToRoster(rosterEntry);

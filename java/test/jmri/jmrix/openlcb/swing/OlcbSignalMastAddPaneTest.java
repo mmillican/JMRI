@@ -13,18 +13,25 @@ import javax.swing.*;
 
 import org.junit.Assert;
 import org.junit.jupiter.api.*;
-import org.junit.jupiter.api.condition.DisabledIfSystemProperty;
 
 import org.openlcb.*;
 
 /**
  * @author Bob Jacobsen Copyright 2018
  */
+@jmri.util.junit.annotations.DisabledIfHeadless
 public class OlcbSignalMastAddPaneTest extends AbstractSignalMastAddPaneTestBase {
 
     /** {@inheritDoc} */
     @Override
     protected SignalMastAddPane getOTT() { return new OlcbSignalMastAddPane(); }
+
+    // parent test that needs to be disabled if headless
+    @Test
+    @Override
+    public void testInfoMethods() {
+        super.testInfoMethods();
+    }
 
     @Test
     public void testSetMast() {
@@ -91,7 +98,6 @@ public class OlcbSignalMastAddPaneTest extends AbstractSignalMastAddPaneTestBase
     }
 
     @Test
-    @DisabledIfSystemProperty(named ="java.awt.headless", matches ="true")
     public void testCreateAndDisableViaGui() throws java.beans.PropertyVetoException {
 
         SignalMastManager mgr = InstanceManager.getDefault(SignalMastManager.class);
@@ -157,18 +163,17 @@ public class OlcbSignalMastAddPaneTest extends AbstractSignalMastAddPaneTestBase
 
         // check correct eventid present
         OlcbSignalMast foundMast = (OlcbSignalMast)sm1;
-        Assert.assertEquals(new OlcbAddress("01.02.03.04.05.06.07.08"), new OlcbAddress(foundMast.getOutputForAppearance("Clear")));
+        Assert.assertEquals(new OlcbAddress("01.02.03.04.05.06.07.08", null), new OlcbAddress(foundMast.getOutputForAppearance("Clear"), null));
 
-        Assert.assertEquals(new OlcbAddress("03.02.01.01.01.01.01.01"), new OlcbAddress(foundMast.getLitEventId()));
-        Assert.assertEquals(new OlcbAddress("04.02.01.01.01.01.01.01"), new OlcbAddress(foundMast.getNotLitEventId()));
-        Assert.assertEquals(new OlcbAddress("05.02.01.01.01.01.01.01"), new OlcbAddress(foundMast.getHeldEventId()));
-        Assert.assertEquals(new OlcbAddress("06.02.01.01.01.01.01.01"), new OlcbAddress(foundMast.getNotHeldEventId()));
+        Assert.assertEquals(new OlcbAddress("03.02.01.01.01.01.01.01", null), new OlcbAddress(foundMast.getLitEventId(), null));
+        Assert.assertEquals(new OlcbAddress("04.02.01.01.01.01.01.01", null), new OlcbAddress(foundMast.getNotLitEventId(), null));
+        Assert.assertEquals(new OlcbAddress("05.02.01.01.01.01.01.01", null), new OlcbAddress(foundMast.getHeldEventId(), null));
+        Assert.assertEquals(new OlcbAddress("06.02.01.01.01.01.01.01", null), new OlcbAddress(foundMast.getNotHeldEventId(), null));
 
         ThreadingUtil.runOnGUI(frame::dispose);
     }
 
     @Test
-    @DisabledIfSystemProperty(named ="java.awt.headless", matches ="true")
     public void testEditAndDisableViaGui() {
 
         Assert.assertEquals(0, InstanceManager.getDefault(SignalMastManager.class).getObjectCount());
@@ -207,10 +212,10 @@ public class OlcbSignalMastAddPaneTest extends AbstractSignalMastAddPaneTestBase
         frame.setVisible(true);
 
         // check load
-        Assert.assertEquals(new OlcbAddress("03.01.01.01.01.01.01.01"), new OlcbAddress(vp.litEventID.getText()));
-        Assert.assertEquals(new OlcbAddress("04.01.01.01.01.01.01.01"), new OlcbAddress(vp.notLitEventID.getText()));
-        Assert.assertEquals(new OlcbAddress("05.01.01.01.01.01.01.01"), new OlcbAddress(vp.heldEventID.getText()));
-        Assert.assertEquals(new OlcbAddress("06.01.01.01.01.01.01.01"), new OlcbAddress(vp.notHeldEventID.getText()));
+        Assert.assertEquals(new OlcbAddress("03.01.01.01.01.01.01.01", null), new OlcbAddress(vp.litEventID.getText(), null));
+        Assert.assertEquals(new OlcbAddress("04.01.01.01.01.01.01.01", null), new OlcbAddress(vp.notLitEventID.getText(), null));
+        Assert.assertEquals(new OlcbAddress("05.01.01.01.01.01.01.01", null), new OlcbAddress(vp.heldEventID.getText(), null));
+        Assert.assertEquals(new OlcbAddress("06.01.01.01.01.01.01.01", null), new OlcbAddress(vp.notHeldEventID.getText(), null));
 
         // disable Approach, change some of the event IDs
         // then build the mast, all on Swing thread
@@ -244,14 +249,14 @@ public class OlcbSignalMastAddPaneTest extends AbstractSignalMastAddPaneTestBase
 
         // check correct eventid present
         OlcbSignalMast foundMast = (OlcbSignalMast)sm2;
-        Assert.assertEquals(new OlcbAddress("00.00.00.00.00.00.00.00"), new OlcbAddress(foundMast.getOutputForAppearance("Stop")));
-        Assert.assertEquals(new OlcbAddress("01.02.03.04.05.06.07.08"), new OlcbAddress(foundMast.getOutputForAppearance("Clear")));
-        Assert.assertEquals(new OlcbAddress("01.01.01.01.01.01.01.01"), new OlcbAddress(foundMast.getOutputForAppearance("Approach")));
+        Assert.assertEquals(new OlcbAddress("00.00.00.00.00.00.00.00", null), new OlcbAddress(foundMast.getOutputForAppearance("Stop"), null));
+        Assert.assertEquals(new OlcbAddress("01.02.03.04.05.06.07.08", null), new OlcbAddress(foundMast.getOutputForAppearance("Clear"), null));
+        Assert.assertEquals(new OlcbAddress("01.01.01.01.01.01.01.01", null), new OlcbAddress(foundMast.getOutputForAppearance("Approach"), null));
 
-        Assert.assertEquals(new OlcbAddress("03.01.01.01.01.01.01.01"), new OlcbAddress(foundMast.getLitEventId()));
-        Assert.assertEquals(new OlcbAddress("04.01.01.01.01.01.01.01"), new OlcbAddress(foundMast.getNotLitEventId()));
-        Assert.assertEquals(new OlcbAddress("05.01.01.01.01.01.01.01"), new OlcbAddress(foundMast.getHeldEventId()));
-        Assert.assertEquals(new OlcbAddress("06.01.01.01.01.01.01.01"), new OlcbAddress(foundMast.getNotHeldEventId()));
+        Assert.assertEquals(new OlcbAddress("03.01.01.01.01.01.01.01", null), new OlcbAddress(foundMast.getLitEventId(), null));
+        Assert.assertEquals(new OlcbAddress("04.01.01.01.01.01.01.01", null), new OlcbAddress(foundMast.getNotLitEventId(), null));
+        Assert.assertEquals(new OlcbAddress("05.01.01.01.01.01.01.01", null), new OlcbAddress(foundMast.getHeldEventId(), null));
+        Assert.assertEquals(new OlcbAddress("06.01.01.01.01.01.01.01", null), new OlcbAddress(foundMast.getNotHeldEventId(), null));
 
         ThreadingUtil.runOnGUI(frame::dispose);
     }
@@ -308,6 +313,8 @@ public class OlcbSignalMastAddPaneTest extends AbstractSignalMastAddPaneTestBase
                 return connection;
             }
         });
+        InstanceManager.setDefault(jmri.jmrix.can.CanSystemConnectionMemo.class, memo);
+        
         memo1 = new OlcbSystemConnectionMemoScaffold("S");
         memo1.setProtocol(jmri.jmrix.can.ConfigurationManager.OPENLCB);
         memo1.setInterface(new OlcbInterface(nodeID1, connection) {
@@ -337,12 +344,15 @@ public class OlcbSignalMastAddPaneTest extends AbstractSignalMastAddPaneTestBase
     public static void postClassTearDown() {
         if(memo != null && memo.getInterface() !=null ) {
            memo.getInterface().dispose();
+           memo.get(OlcbEventNameStore.class).deregisterShutdownTask();
         }
         if(memo1 != null && memo1.getInterface() !=null ) {
            memo1.getInterface().dispose();
+           memo1.get(OlcbEventNameStore.class).deregisterShutdownTask();
         }
         if(memo2 != null && memo2.getInterface() !=null ) {
            memo2.getInterface().dispose();
+           memo2.get(OlcbEventNameStore.class).deregisterShutdownTask();
         }
         memo = null;
         memo1 = null;
@@ -351,6 +361,9 @@ public class OlcbSignalMastAddPaneTest extends AbstractSignalMastAddPaneTestBase
         nodeID = null;
         nodeID1 = null;
         nodeID2 = null;
+
+        InstanceManager.getDefault(jmri.IdTagManager.class).dispose();
+
         JUnitUtil.tearDown();
     }
 }

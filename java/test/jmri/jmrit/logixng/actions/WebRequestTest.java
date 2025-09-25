@@ -10,6 +10,8 @@ import java.util.ArrayList;
 import javax.net.ssl.HttpsURLConnection;
 
 import jmri.*;
+import jmri.configurexml.LoadAndStorePreferences;
+import jmri.configurexml.ShutdownPreferences;
 import static jmri.configurexml.StoreAndCompare.checkFile;
 import jmri.jmrit.logixng.*;
 import jmri.jmrit.logixng.expressions.ExpressionTurnout;
@@ -172,7 +174,7 @@ public class WebRequestTest extends AbstractDigitalActionTestBase {
 
         JUnitAppender.assertWarnMessageStartsWith("Log local variables:");
         JUnitAppender.assertWarnMessageStartsWith("Name: turnout, Value: MiamiWest");
-        JUnitAppender.assertWarnMessageStartsWith("Name: bean, Value: IT3");
+        JUnitAppender.assertWarnMessageStartsWith("Name: bean, Value: TorontoFirst");
         JUnitAppender.assertWarnMessageStartsWith("Global variables:");
         JUnitAppender.assertWarnMessageStartsWith("Global Name: responseCode, value: 200");
         JUnitAppender.assertWarnMessageStartsWith("Global Name: reply, value: Turnout MiamiWest is thrown");
@@ -189,7 +191,7 @@ public class WebRequestTest extends AbstractDigitalActionTestBase {
 
         JUnitAppender.assertWarnMessageStartsWith("Log local variables:");
         JUnitAppender.assertWarnMessageStartsWith("Name: turnout, Value: Chicago32");
-        JUnitAppender.assertWarnMessageStartsWith("Name: bean, Value: IT3");
+        JUnitAppender.assertWarnMessageStartsWith("Name: bean, Value: TorontoFirst");
         JUnitAppender.assertWarnMessageStartsWith("Global variables:");
         JUnitAppender.assertWarnMessageStartsWith("Global Name: responseCode, value: 200");
         JUnitAppender.assertWarnMessageStartsWith("Global Name: reply, value: Turnout Chicago32 is thrown");
@@ -300,7 +302,7 @@ public class WebRequestTest extends AbstractDigitalActionTestBase {
         Assert.assertEquals(200, (int)_responseCodeVariable.getValue());
         Assert.assertEquals("Cookie Green is set. Cookies from client: ", _replyVariable.getValue());
         String cookies = _cookiesVariable.getValue().toString();
-        cookies = cookies.replaceAll("expires=\\w\\w\\w, \\d\\d-\\w\\w\\w-\\d\\d\\d\\d \\d\\d:\\d\\d:\\d\\d", "expires=???, ??-???-???? ??:??:??");
+        cookies = cookies.replaceAll("expires=\\w\\w\\w, \\d\\d.\\w\\w\\w.\\d\\d\\d\\d \\d\\d:\\d\\d:\\d\\d", "expires=???, ??-???-???? ??:??:??");
         Assert.assertEquals("{Green=Green=GreenGreen%21; expires=???, ??-???-???? ??:??:?? GMT; Max-Age=1296000}", cookies);
 
         JUnitAppender.assertWarnMessageStartsWith("Log local variables:");
@@ -320,7 +322,7 @@ public class WebRequestTest extends AbstractDigitalActionTestBase {
         Assert.assertEquals(200, (int)_responseCodeVariable.getValue());
         Assert.assertEquals("Cookie Yellow is set. Cookies from client: Green=GreenGreen!", _replyVariable.getValue());
         cookies = _cookiesVariable.getValue().toString();
-        cookies = cookies.replaceAll("expires=\\w\\w\\w, \\d\\d-\\w\\w\\w-\\d\\d\\d\\d \\d\\d:\\d\\d:\\d\\d", "expires=???, ??-???-???? ??:??:??");
+        cookies = cookies.replaceAll("expires=\\w\\w\\w, \\d\\d.\\w\\w\\w.\\d\\d\\d\\d \\d\\d:\\d\\d:\\d\\d", "expires=???, ??-???-???? ??:??:??");
         Assert.assertEquals("{Yellow=Yellow=YellowYellow%21; expires=???, ??-???-???? ??:??:?? GMT; Max-Age=1296000, Green=Green=GreenGreen%21; expires=???, ??-???-???? ??:??:?? GMT; Max-Age=1296000}", cookies);
 
         JUnitAppender.assertWarnMessageStartsWith("Log local variables:");
@@ -340,7 +342,7 @@ public class WebRequestTest extends AbstractDigitalActionTestBase {
         Assert.assertEquals(200, (int)_responseCodeVariable.getValue());
         Assert.assertEquals("Cookie Blue is set. Cookies from client: Yellow=YellowYellow!, Green=GreenGreen!", _replyVariable.getValue());
         cookies = _cookiesVariable.getValue().toString();
-        cookies = cookies.replaceAll("expires=\\w\\w\\w, \\d\\d-\\w\\w\\w-\\d\\d\\d\\d \\d\\d:\\d\\d:\\d\\d", "expires=???, ??-???-???? ??:??:??");
+        cookies = cookies.replaceAll("expires=\\w\\w\\w, \\d\\d.\\w\\w\\w.\\d\\d\\d\\d \\d\\d:\\d\\d:\\d\\d", "expires=???, ??-???-???? ??:??:??");
         Assert.assertEquals("{Yellow=Yellow=YellowYellow%21; expires=???, ??-???-???? ??:??:?? GMT; Max-Age=1296000, Blue=Blue=BlueBlue%21; expires=???, ??-???-???? ??:??:?? GMT; Max-Age=1296000, Green=Green=GreenGreen%21; expires=???, ??-???-???? ??:??:?? GMT; Max-Age=1296000}", cookies);
 
         JUnitAppender.assertWarnMessageStartsWith("Log local variables:");
@@ -527,6 +529,8 @@ public class WebRequestTest extends AbstractDigitalActionTestBase {
                     new File(FileUtil.getProgramPath() + "help/en/html/tools/logixng/reference/WebRequestExample/" + "WebRequest.xml");
 
             try {
+                // Ignore Timebase changes
+                InstanceManager.getDefault(ShutdownPreferences.class).setIgnoreTimebase(true);
                 // Note: The comparision is made with the first xml file that doesn't have the header comment.
                 dataHasChanged = checkFile(fileInDocumentationFolder, firstFile);
             } catch (FileNotFoundException e) {
@@ -580,7 +584,13 @@ public class WebRequestTest extends AbstractDigitalActionTestBase {
         JUnitUtil.initLogixNGManager();
         jmri.jmrit.logixng.NamedBeanType.reset();
 
-        _category = Category.ITEM;
+        // Exclude dynamic content in the tables and panels file
+        var loadAndStorePreferences = InstanceManager.getDefault(LoadAndStorePreferences.class);
+        loadAndStorePreferences.setExcludeMemoryIMCURRENTTIME(true);
+        loadAndStorePreferences.setExcludeJmriVersion(true);
+        loadAndStorePreferences.setExcludeFileHistory(true);
+
+        _category = LogixNG_Category.ITEM;
         _isExternal = true;
 
         _logixNG = InstanceManager.getDefault(LogixNG_Manager.class).createLogixNG("A logixNG");

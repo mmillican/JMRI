@@ -154,6 +154,11 @@
                 <li></li>
             </ul>
 
+        <h4>SRCP</h4>
+            <ul>
+                <li></li>
+            </ul>
+
         <h4>TAMS</h4>
             <ul>
                 <li></li>
@@ -184,6 +189,11 @@
           <li></li>
         </ul>
 
+        <h4>AE Model</h4>
+            <ul>
+                <li></li>
+            </ul>
+
         <h4>Arnold</h4>
             <ul>
                 <li></li>
@@ -209,6 +219,11 @@
                 <li></li>
             </ul>
 
+        <h4>DCC Concepts</h4>
+            <ul>
+                <li></li>
+            </ul>
+
         <h4>Digikeijs (Digirails)</h4>
             <ul>
                 <li></li>
@@ -216,7 +231,8 @@
 
         <h4>Digitrax</h4>
             <ul>
-                <li></li>
+                <li>Updated Series 7 mobile (locomotive) decoder definitions.</li>
+                <li>Added Series 8 mobile (locomotive) decoder definitions.</li>
             </ul>
 
         <h4>Doehler &amp; Haas</h4>
@@ -225,6 +241,11 @@
             </ul>
 
         <h4>ESU</h4>
+            <ul>
+                <li></li>
+            </ul>
+
+        <h4>Hattoms</h4>
             <ul>
                 <li></li>
             </ul>
@@ -295,6 +316,11 @@
             </ul>
 
         <h4>QSI</h4>
+            <ul>
+                <li></li>
+            </ul>
+
+        <h4>Rampino Elektronic</h4>
             <ul>
                 <li></li>
             </ul>
@@ -374,12 +400,21 @@
                 <li></li>
             </ul>
 
-    <h3>DecoderPro</h3>
-        <a id="DecoderPro" name="DecoderPro"></a>
+    <h3>Control Panel Editor</h3>
+        <a id="CPE" name="CPE"></a>
         <ul>
-            <li>Better handling of selected items when roster list is updated</li>
-            <li>Enable/Disable bottom controls depending on selected item</li>
+            <li></li>
         </ul>
+        <h4>Circuit Builder</h4>
+            <a id="CPE-CB" name="CPE-CB"></a>
+            <ul>
+                <li></li>
+            </ul>
+        <h4>Palette</h4>
+            <a id="CPE-P" name="CPE-P"></a>
+            <ul>
+                <li></li>
+            </ul>
 
     <h3>CTC Tool</h3>
         <a id="PE-CTC" name="PE-CTC"></a>
@@ -387,10 +422,21 @@
             <li></li>
         </ul>
 
+    <h3>DecoderPro</h3>
+        <a id="DecoderPro" name="DecoderPro"></a>
+        <ul>
+            <li>DecoderPro now shows a "No Group" choice in the Roster Groups selector.
+                This contains all those roster entries that have not been 
+                assigned to a specific group.  You can delete roster entries
+                from the roster when displaying the "No Group" by selecting
+                the roster entry, then ctrl-clicking / right-clicking on it
+                and selecting "Delete from Roster".</li>
+        </ul>
+
    <h3>Dispatcher</h3>
         <a id="Dispatcher" name="Dispatcher"></a>
         <ul>
-             <li></li>
+             <li>Fix Create New Transit caused by bad initialization of stopping distance arrays. Fix crash when transit has no sections.</li>
         </ul>
 
     <h3>Dispatcher System</h3>
@@ -408,15 +454,23 @@
     <h3>Layout Editor</h3>
         <a id="LE" name="LE"></a>
         <ul>
-            <li>Add the <strong>hidden</strong> attribute to the Layout Editor <strong>Shape</strong>
-            item.  The center popup menu has an option to hide the shape when not editing.  The
-            <strong>setHidden(boolean)</strong> public method can be used by scripts and LogixNG.</li>
+            <li>Normally, Layout Editor turnouts in UNKNOWN state are indicated
+                by drawing both legs of the turnout, instead of showing just one
+                as for CLOSED and THROWN.  There's a new option 'Show ? When Unknown'
+                in the turnout's contextual menu that will make the UNKNOWN state
+                more visible.</li>
         </ul>
 
         <h4>NX - Entry/Exit Tool</h4>
             <ul>
                 <li></li>
             </ul>
+
+    <h3>LccPro</h3>
+        <a id="LccPro" name="LccPro"></a>
+        <ul>
+          <li></li>
+        </ul>
 
     <h3>Logix</h3>
         <a id="Logix" name="Logix"></a>
@@ -436,33 +490,25 @@
             <li></li>
         </ul>
 
-    <h3>Operations</h3>
+    <h3>OperationsPro</h3>
         <a id="Operations" name="Operations"></a>
         <ul>
-            <li></li>
+          <li>Added car blocking to CSV Manifest and switch list files.</li>
+          <li>Minor improvement to the "Show Schedules by Car Type and Load" tool.</li>
+          <li>Improvements to the Cars print and preview, added car's "Last Location", "Last Train", and "Set out" time.</li>
         </ul>
 
-   <h3>Panel Editor</h3>
+<h3>Panel Editor</h3>
         <a id="PE" name="PE"></a>
         <ul>
             <li></li>
         </ul>
 
-    <h3>Control Panel Editor</h3>
-        <a id="CPE" name="CPE"></a>
+    <h3>Permissions</h3>
+        <a id="Permissions" name="Permissions"></a>
         <ul>
             <li></li>
         </ul>
-        <h4>Circuit Builder</h4>
-            <a id="CPE-CB" name="CPE-CB"></a>
-            <ul>
-                <li></li>
-            </ul>
-        <h4>Palette</h4>
-            <a id="CPE-P" name="CPE-P"></a>
-            <ul>
-                <li></li>
-            </ul>
 
     <h3>Preferences</h3>
         <a id="Preferences" name="Preferences"></a>
@@ -543,11 +589,7 @@
     <h3>Throttle</h3>
         <a id="throttle" name="throttle"></a>
         <ul>
-            <li>A visible property was added to function buttons defined in the label&amp;media panels of decoderpro, this property is used by the throttle UI.</li>
-            <li>A throttle preference was added to show/hide the speed step selector on the control panel of any new UI throttles.</li>
-            <li>When a throttle UI layout is saved using the File->Save current throttle menu entry, if it is linked to a roster entry, the user will be proposed to also export function buttons customizations to the roster entry.</li>
-            <li>Fix issue with throttle window title not resetting when a throttle is released</li>
-            <li>Fix issue with selection foreground color in throttles list window</li>
+            <li></li>
         </ul>
 
     <h3>Timetable</h3>
@@ -565,7 +607,7 @@
     <h3>Turnouts, Lights, Sensors and other elements</h3>
         <a id="TLae" name="TLae"></a>
         <ul>
-            <li></li>
+            <li>Audio Tables, Add Buffer button - Fixed a bug preventing the Add Buffer window displaying.</li>
         </ul>
 
    <h3>Warrants</h3>
@@ -576,6 +618,12 @@
 
    <h3>Web Access</h3>
         <a id="WA" name="WA"></a>
+        <ul>
+            <li></li>
+        </ul>
+
+   <h3>Web Server</h3>
+        <a id="server" name="server"></a>
         <ul>
             <li></li>
         </ul>
@@ -592,14 +640,14 @@
             <li></li>
         </ul>
 
-   <h3>Web Server</h3>
-        <a id="server" name="server"></a>
+   <h3>Virtual Sound Decoder</h3>
+        <a id="VSD" name="VSD"></a>
         <ul>
             <li></li>
         </ul>
 
-   <h3>Virtual Sound Decoder</h3>
-        <a id="VSD" name="VSD"></a>
+   <h3>Z21 Server</h3>
+        <a id="Z21" name="Z21"></a>
         <ul>
             <li></li>
         </ul>
@@ -607,6 +655,7 @@
     <h3>Miscellaneous</h3>
         <a id="Misc" name="Misc"></a>
         <ul>
-            <li></li>
+            <li>Updated the JDOM2 library from 2.0.6 to 2.0.6.1 to 
+                resolve a security issue.</li>
         </ul>
 

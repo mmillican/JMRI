@@ -600,6 +600,7 @@ public class MqttThrottleTest extends jmri.jmrix.AbstractThrottleTest {
      */
     @Test
     @Override
+    @Disabled("Test requires further development")
     public void testSendFunctionGroup1() {
     }
 
@@ -608,6 +609,7 @@ public class MqttThrottleTest extends jmri.jmrix.AbstractThrottleTest {
      */
     @Test
     @Override
+    @Disabled("Test requires further development")
     public void testSendFunctionGroup2() {
     }
 
@@ -616,6 +618,7 @@ public class MqttThrottleTest extends jmri.jmrix.AbstractThrottleTest {
      */
     @Test
     @Override
+    @Disabled("Test requires further development")
     public void testSendFunctionGroup3() {
     }
 
@@ -624,6 +627,7 @@ public class MqttThrottleTest extends jmri.jmrix.AbstractThrottleTest {
      */
     @Test
     @Override
+    @Disabled("Test requires further development")
     public void testSendFunctionGroup4() {
     }
 
@@ -632,6 +636,7 @@ public class MqttThrottleTest extends jmri.jmrix.AbstractThrottleTest {
      */
     @Test
     @Override
+    @Disabled("Test requires further development")
     public void testSendFunctionGroup5() {
     }
 
@@ -656,7 +661,7 @@ public class MqttThrottleTest extends jmri.jmrix.AbstractThrottleTest {
 
     @Override
     @BeforeEach
-    public void setUp() throws Exception {
+    public void setUp() {
         JUnitUtil.setUp();
        // prepare an interface
         a = new MqttAdapterScaffold(true);
@@ -665,13 +670,14 @@ public class MqttThrottleTest extends jmri.jmrix.AbstractThrottleTest {
         memo.setMqttAdapter(a);
         tm = new MqttThrottleManager(memo);
         jmri.InstanceManager.setDefault(jmri.ThrottleManager.class, tm);
+        memo.store(tm, jmri.ThrottleManager.class);
         instance = new MqttThrottle(memo, sendThrottleTopic, rcvThrottleTopic,
         sendDirectionTopic, rcvDirectionTopic, sendFunctionTopic, rcvFunctionTopic, new jmri.DccLocoAddress(3, false));
     }
 
     @Override
     @AfterEach
-    public void tearDown() throws Exception {
+    public void tearDown() {
         a.dispose();
         a = null;
         memo.dispose();
