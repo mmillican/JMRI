@@ -1,5 +1,7 @@
 package jmri.jmrit.logixng.implementation;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+
 import java.awt.GraphicsEnvironment;
 import java.beans.*;
 import java.io.PrintWriter;
@@ -423,7 +425,7 @@ public class DefaultLogixNGManager extends AbstractManager<LogixNG>
     static volatile DefaultLogixNGManager _instance = null;
 
     @InvokeOnGuiThread  // this method is not thread safe
-    static public DefaultLogixNGManager instance() {
+    public static DefaultLogixNGManager instance() {
         if (!ThreadingUtil.isGUIThread()) {
             LoggingUtil.warnOnce(log, "instance() called on wrong thread");
         }
@@ -484,7 +486,8 @@ public class DefaultLogixNGManager extends AbstractManager<LogixNG>
 
     /** {@inheritDoc} */
     @Override
-//    @OverridingMethodsMustInvokeSuper
+    @SuppressFBWarnings(value = "OVERRIDING_METHODS_MUST_INVOKE_SUPER",
+            justification = "LogixNG is a tree that must be deleted recursively")
     public final void deleteBean(@Nonnull LogixNG logixNG, @Nonnull String property) throws PropertyVetoException {
         for (int i=logixNG.getNumConditionalNGs()-1; i >= 0; i--) {
             ConditionalNG child = logixNG.getConditionalNG(i);
@@ -574,6 +577,6 @@ public class DefaultLogixNGManager extends AbstractManager<LogixNG>
     }
 
 
-    private final static org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(DefaultLogixNGManager.class);
+    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(DefaultLogixNGManager.class);
 
 }

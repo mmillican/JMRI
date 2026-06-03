@@ -1,5 +1,7 @@
 package jmri.jmrit.display.panelEditor;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
@@ -37,9 +39,7 @@ import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
 import javax.swing.JTextField;
 
-import jmri.CatalogTreeManager;
-import jmri.ConfigureManager;
-import jmri.InstanceManager;
+import jmri.*;
 import jmri.configurexml.ConfigXmlManager;
 import jmri.configurexml.XmlAdapter;
 import jmri.jmrit.catalog.ImageIndexEditor;
@@ -104,6 +104,7 @@ public class PanelEditor extends Editor implements ItemListener {
     private static final String RPSREPORTER = "RPSreporter";
     private static final String FAST_CLOCK = "FastClock";
     private static final String GLOBAL_VARIABLE = "GlobalVariable";
+    private static final String LOGIXNG_TABLE = "LogixNGTable";
     private static final String ICON = "Icon";
     private static final String AUDIO = "Audio";
     private static final String LOGIXNG = "LogixNG";
@@ -119,6 +120,7 @@ public class PanelEditor extends Editor implements ItemListener {
     private final JCheckBox menuBox = new JCheckBox(Bundle.getMessage("CheckBoxMenuBar"));
     private final JLabel scrollableLabel = new JLabel(Bundle.getMessage("ComboBoxScrollable"));
     private final JComboBox<String> scrollableComboBox = new JComboBox<>();
+    private JCheckBoxMenuItem disableLocoMarkerPopupMenuItem;
 
     private final JButton labelAdd = new JButton(Bundle.getMessage("ButtonAddText"));
     private final JTextField nextLabel = new JTextField(10);
@@ -278,6 +280,7 @@ public class PanelEditor extends Editor implements ItemListener {
         _addIconBox.addItem(new ComboBoxItem(RPSREPORTER));
         _addIconBox.addItem(new ComboBoxItem(FAST_CLOCK));
         _addIconBox.addItem(new ComboBoxItem(GLOBAL_VARIABLE));
+        _addIconBox.addItem(new ComboBoxItem(LOGIXNG_TABLE));
         _addIconBox.addItem(new ComboBoxItem(AUDIO));
         _addIconBox.addItem(new ComboBoxItem(LOGIXNG));
         _addIconBox.addItem(new ComboBoxItem(ICON));
@@ -441,6 +444,8 @@ public class PanelEditor extends Editor implements ItemListener {
                 bundleName = "BeanNameLight";
             } else if (GLOBAL_VARIABLE.equals(name)) {
                 bundleName = "BeanNameGlobalVariable";
+            } else if (LOGIXNG_TABLE.equals(name)) {
+                bundleName = "BeanNameLogixNGTable";
             } else if (AUDIO.equals(name)) {
                 bundleName = "BeanNameAudio";
             } else {
@@ -483,6 +488,8 @@ public class PanelEditor extends Editor implements ItemListener {
      * so we don't dispose it (yet).
      */
     @Override
+    @SuppressFBWarnings(value = "OVERRIDING_METHODS_MUST_INVOKE_SUPER",
+            justification = "Don't want to close window yet")
     public void windowClosing(java.awt.event.WindowEvent e) {
         setVisible(false);
     }
@@ -538,6 +545,18 @@ public class PanelEditor extends Editor implements ItemListener {
                 removeMarkers();
             }
         });
+        InstanceManager.getOptionalDefault(UserPreferencesManager.class).ifPresent(prefsMgr -> {
+            markerMenu.addSeparator();
+            disableLocoMarkerPopupMenuItem = new JCheckBoxMenuItem(
+                    new AbstractAction(Bundle.getMessage("DisableLocoMarkerPopup")) {
+                        @Override
+                        public void actionPerformed(ActionEvent e) {
+                            enableDisableLocoMarkerPopups();
+                        }
+            });
+            disableLocoMarkerPopupMenuItem.setSelected(isLocoMarkerPopupDisabled());
+            markerMenu.add(disableLocoMarkerPopupMenuItem);
+        });
 
         JMenu warrantMenu = jmri.jmrit.logix.WarrantTableAction.getDefault().makeWarrantMenu(isEditable());
         if (warrantMenu != null) {
@@ -546,6 +565,13 @@ public class PanelEditor extends Editor implements ItemListener {
 
         targetFrame.addHelpMenu("package.jmri.jmrit.display.PanelTarget", true);
         return targetFrame;
+    }
+
+    private void enableDisableLocoMarkerPopups() {
+        if (disableLocoMarkerPopupMenuItem != null) {
+            boolean selected = disableLocoMarkerPopupMenuItem.isSelected();
+            setLocoMarkerPopupDisabled(selected);
+        }
     }
 
     /*
@@ -1050,6 +1076,7 @@ public class PanelEditor extends Editor implements ItemListener {
         addItemPopUp(new ComboBoxItem(RPSREPORTER), _add);
         addItemPopUp(new ComboBoxItem(FAST_CLOCK), _add);
         addItemPopUp(new ComboBoxItem(GLOBAL_VARIABLE), _add);
+        addItemPopUp(new ComboBoxItem(LOGIXNG_TABLE), _add);
         addItemPopUp(new ComboBoxItem(AUDIO), _add);
         addItemPopUp(new ComboBoxItem(LOGIXNG), _add);
         addItemPopUp(new ComboBoxItem(ICON), _add);

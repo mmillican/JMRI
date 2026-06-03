@@ -124,10 +124,10 @@ public class TrainLogger extends XmlFile implements InstanceManagerAutoDefault, 
                 "", // next location name
                 "", // cars
                 "", // pulls
-                "", // drops
-                "", // length
-                e.getPropertyName(), // weight
-                e.getOldValue(), // status
+                e.getPropertyName(), // drops
+                "from:", // length
+                e.getOldValue(), // weight
+                "to:", // status
                 e.getNewValue(), // build messages
                 getDateAndTime()});
         fileOut(line);
@@ -274,5 +274,5 @@ public class TrainLogger extends XmlFile implements InstanceManagerAutoDefault, 
         }
     }
 
-    private final static Logger log = LoggerFactory.getLogger(TrainLogger.class);
+    private static final Logger log = LoggerFactory.getLogger(TrainLogger.class);
 }

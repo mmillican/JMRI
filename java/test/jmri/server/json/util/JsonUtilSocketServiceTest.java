@@ -2,6 +2,7 @@ package jmri.server.json.util;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import java.io.*;
 import java.util.Locale;
@@ -44,6 +45,8 @@ public class JsonUtilSocketServiceTest {
         JUnitUtil.resetProfileManager(
                 new NullProfile("JsonUtilHttpServiceTest", "12345678", folder));
         JUnitUtil.initConfigureManager();
+        // Initialize mock PermissionManager for session authentication tests
+        InstanceManager.store(new MockPermissionManager(), jmri.PermissionManager.class);
     }
 
     @AfterEach
@@ -57,11 +60,12 @@ public class JsonUtilSocketServiceTest {
      * Test of onMessage method, of class JsonUtilSocketService. Tests only
      * responses that are expected to be consistent between a
      *
-     * @throws java.lang.Exception if an exception unexpected in the context of
-     *                             these tests occurs
+     * @throws java.io.IOException if an unexpected exception occurs.
+     * @throws jmri.JmriException if an unexpected exception occurs.
+     * @throws jmri.server.json.JsonException if an unexpected exception occurs.
      */
     @Test
-    public void testOnMessage() throws Exception {
+    public void testOnMessage() throws IOException, JmriException, JsonException {
         JsonNode message;
         InstanceManager.getDefault(JsonServerPreferences.class).setValidateServerMessages(true);
         JsonMockConnection connection = new JsonMockConnection((DataOutputStream) null);
@@ -118,15 +122,16 @@ public class JsonUtilSocketServiceTest {
     }
 
     /**
-     * Test of onMessage method, of class JsonUtilSocketService. Tests PANEL
-     * JSON type if not running headless.
+     * Test of onMessage method, of class JsonUtilSocketService.
+     * Tests PANEL JSON type if not running headless.
      *
-     * @throws java.lang.Exception if an exception unexpected in the context of
-     *                             these tests occurs
+     * @throws java.io.IOException if an unexpected exception occurs.
+     * @throws jmri.JmriException if an unexpected exception occurs.
+     * @throws jmri.server.json.JsonException if an unexpected exception occurs.
      */
     @Test
     @DisabledIfHeadless
-    public void testOnMessagePanels() throws Exception {
+    public void testOnMessagePanels() throws IOException, JmriException, JsonException {
 
         Editor editor = new SwitchboardEditor("json test switchboard");
         JsonMockConnection connection = new JsonMockConnection((DataOutputStream) null);
@@ -152,11 +157,12 @@ public class JsonUtilSocketServiceTest {
      * that. Does not test PANEL JSON type, see {@link #testOnListPanels()} for
      * that.
      *
-     * @throws java.lang.Exception if an exception unexpected in the context of
-     *                             these tests occurs
+     * @throws java.io.IOException if an unexpected exception occurs.
+     * @throws jmri.JmriException if an unexpected exception occurs.
+     * @throws jmri.server.json.JsonException if an unexpected exception occurs.
      */
     @Test
-    public void testOnList() throws Exception {
+    public void testOnList() throws IOException, JmriException, JsonException {
         ObjectMapper mapper = new ObjectMapper();
         JsonMockConnection connection = new JsonMockConnection((DataOutputStream) null);
         JsonNode empty = connection.getObjectMapper().createObjectNode();
@@ -175,11 +181,12 @@ public class JsonUtilSocketServiceTest {
      * Test of onList method for CONFIG_PROFILE JSON type, of class
      * JsonUtilSocketService.
      *
-     * @throws java.lang.Exception if an exception unexpected in the context of
-     *                             these tests occurs
+     * @throws java.io.IOException if an unexpected exception occurs.
+     * @throws jmri.JmriException if an unexpected exception occurs.
+     * @throws jmri.server.json.JsonException if an unexpected exception occurs.
      */
     @Test
-    public void testOnListConfigProfile() throws Exception {
+    public void testOnListConfigProfile() throws IOException, JmriException, JsonException {
         ObjectMapper mapper = new ObjectMapper();
         JsonMockConnection connection = new JsonMockConnection((DataOutputStream) null);
         JsonNode empty = connection.getObjectMapper().createObjectNode();
@@ -194,12 +201,13 @@ public class JsonUtilSocketServiceTest {
      * Test of onList method, of class JsonUtilSocketService. Tests PANEL JSON
      * type if not running headless.
      *
-     * @throws java.lang.Exception if an exception unexpected in the context of
-     *                             these tests occurs
+     * @throws java.io.IOException if an unexpected exception occurs.
+     * @throws jmri.JmriException if an unexpected exception occurs.
+     * @throws jmri.server.json.JsonException if an unexpected exception occurs.
      */
     @Test
     @DisabledIfHeadless
-    public void testOnListPanels() throws Exception {
+    public void testOnListPanels() throws IOException, JmriException, JsonException {
 
         Editor switchboard = new SwitchboardEditor("json test switchboard");
         Editor controlPanel = new ControlPanelEditor("json test control panel");
@@ -215,11 +223,9 @@ public class JsonUtilSocketServiceTest {
         JsonNode message = connection.getMessage();
         assertNotNull( message, "Message is not null");
         assertTrue( message.isArray(), "Message is array");
-        if (message.size() != 4) {
-            log.error(message.toString()); // what panel was left in place that
-                                           // triggered this?
-        }
-        assertEquals( 4, message.size(), "Array has four elements");
+        assertEquals( 4, message.size(),
+            () -> "Array has four elements, what panel was left in place that triggered this? "
+                + message.toString());
         JUnitUtil.dispose(switchboard.getTargetFrame());
         JUnitUtil.dispose(switchboard);
         JUnitUtil.dispose(controlPanel.getTargetFrame());
@@ -291,6 +297,141 @@ public class JsonUtilSocketServiceTest {
         assertEquals( 0, wsp.getPropertyChangeListeners().length, "listeners");
     }
 
+    /**
+     * Test SESSION_LOGIN message handling via onMessage.
+     *
+     * @throws IOException if test fails unexpectedly
+     * @throws JmriException if test fails unexpectedly
+     * @throws JsonException expected for invalid credentials in test
+     */
+    @Test
+    public void testSessionLoginMessage() throws IOException, JmriException, JsonException {
+        JsonMockConnection connection = new JsonMockConnection((DataOutputStream) null);
+        JsonUtilSocketService instance = new JsonUtilSocketService(connection);
+        ObjectNode loginData = connection.getObjectMapper().createObjectNode();
+        loginData.put("username", "testuser");
+        loginData.put("password", "testpass");
+
+        try {
+            instance.onMessage(JSON.SESSION_LOGIN, loginData,
+                new JsonRequest(locale, JSON.V5, JSON.POST, 42));
+            JsonNode message = connection.getMessage();
+            assertNotNull(message, "Should receive a message");
+            // In test environment without configured users, should get error
+        } catch (JsonException ex) {
+            // Expected - no valid users configured in test
+            assertTrue(ex.getCode() == 401 || ex.getCode() == 403,
+                "Expected unauthorized or forbidden error");
+        }
+    }
+
+    /**
+     * Test SESSION_LOGOUT message handling via onMessage.
+     *
+     * @throws IOException if test fails unexpectedly
+     * @throws JmriException if test fails unexpectedly
+     * @throws JsonException if test fails unexpectedly
+     */
+    @Test
+    public void testSessionLogoutMessage() throws IOException, JmriException, JsonException {
+        JsonMockConnection connection = new JsonMockConnection((DataOutputStream) null);
+        JsonUtilSocketService instance = new JsonUtilSocketService(connection);
+        ObjectNode logoutData = connection.getObjectMapper().createObjectNode();
+        logoutData.put("token", "test-session-token");
+        logoutData.put(JSON.USERNAME, "testuser");
+
+        instance.onMessage(JSON.SESSION_LOGOUT, logoutData,
+            new JsonRequest(locale, JSON.V5, JSON.POST, 42));
+        JsonNode message = connection.getMessage();
+        assertNotNull(message, "Should receive logout confirmation");
+        assertEquals(JSON.SESSION_LOGOUT, message.path(JSON.TYPE).asText(),
+            "Message type should be sessionLogout");
+        assertEquals("test-session-token", message.path(JSON.DATA).path("authenticationToken").asText(),
+            "Should return the token");
+    }
+
+    /**
+     * Mock PermissionManager for testing session authentication.
+     */
+    private static class MockPermissionManager implements jmri.PermissionManager {
+        @Override
+        public boolean remoteLogin(StringBuilder sessionId, java.util.Locale locale,
+                                  String username, String password) {
+            // Reject guest users
+            if ("guest".equals(username)) {
+                return false;
+            }
+            // Accept any non-guest user for testing
+            sessionId.append("test-session-").append(username);
+            return true;
+        }
+
+        @Override
+        public void remoteLogout(String sessionId) {
+            // No-op for testing
+        }
+
+        @Override
+        public boolean isAGuestUser(String username) {
+            return "guest".equals(username);
+        }
+
+        @Override
+        public boolean isAGuestUser(jmri.User user) {
+            return user != null && isAGuestUser(user.getUserName());
+        }
+
+        // Stub implementations for other required methods
+        @Override
+        public jmri.Role addRole(String name) { return null; }
+        @Override
+        public void removeRole(String name) {}
+        @Override
+        public jmri.User addUser(String username, String password) { return null; }
+        @Override
+        public void removeUser(String username) {}
+        @Override
+        public void changePassword(String newPassword, String oldPassword) {}
+        @Override
+        public boolean login(String username, String password) { return false; }
+        @Override
+        public void logout() {}
+        @Override
+        public String getCurrentUserName() { return null; }
+        @Override
+        public boolean isCurrentUser(String username) { return false; }
+        @Override
+        public boolean isCurrentUser(jmri.User user) { return false; }
+        @Override
+        public boolean isCurrentUserPermittedToChangePassword() { return false; }
+        @Override
+        public boolean isLoggedIn() { return false; }
+        @Override
+        public boolean isRemotelyLoggedIn(String sessionId) { return false; }
+        @Override
+        public void addLoginListener(LoginListener listener) {}
+        @Override
+        public boolean isEnabled() { return true; }
+        @Override
+        public void setEnabled(boolean enabled) {}
+        @Override
+        public boolean isAllowEmptyPasswords() { return false; }
+        @Override
+        public void setAllowEmptyPasswords(boolean value) {}
+        @Override
+        public boolean hasAtLeastPermission(jmri.Permission permission, jmri.PermissionValue minValue) { return true; }
+        @Override
+        public boolean hasAtLeastRemotePermission(String sessionId, jmri.Permission permission, jmri.PermissionValue minValue) { return true; }
+        @Override
+        public boolean ensureAtLeastPermission(jmri.Permission permission, jmri.PermissionValue minValue) { return true; }
+        @Override
+        public void registerOwner(jmri.PermissionOwner owner) {}
+        @Override
+        public void registerPermission(jmri.Permission permission) {}
+        @Override
+        public void storePermissionSettings() {}
+    }
+
     private static class TestJsonUtilHttpService extends JsonUtilHttpService {
 
         private boolean throwException = false;
@@ -314,5 +455,5 @@ public class JsonUtilSocketServiceTest {
 
     }
 
-    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(JsonUtilSocketServiceTest.class);
+    // private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(JsonUtilSocketServiceTest.class);
 }

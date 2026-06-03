@@ -141,6 +141,9 @@
         <li>Ian Birchenough, who contributed (with Phil Grainger) six ZTC decoder definition files,
         plus the ZTC 4007, and the Lenz Standard decoder.</li>
 
+        <li>Brandon Bittinger, who helped debug a nasty problem with 
+        Reporter and IdTag initialization.</li>
+        
         <li>Rodney Black, <!-- Sturbee -->
         who has worked on refining the JMRI interfaces as part of creating his
         <a href="http://cats4ctc.org/">CATS</a> system.</li>
@@ -436,6 +439,10 @@
         <li>Paul Fraker, who wrote the documentation for the Throttles and provided MRC decoder
         definitions</li>
 
+        <li>Chad Francis, <!-- yamanote1138 -->
+        who improved DCC++ connection reliability, improved WebSocket power control,
+        and improved the handling of missing roster mount points.
+        
         <li>Joe Fugate and the other people of <a href="https://model-railroad-hobbyist.com">Model
         Railroad Hobbyist</a> emagazine for putting the <a href=
         "https://model-railroad-hobbyist.com/mrht_decoderpro">JMRI clinics from the NMRA 2008
@@ -461,6 +468,9 @@
         </li>
 
         <li>@gitophile, who found the fix for a broken link.</li>
+
+        <li>Philip Gladstone, <!-- pjsg -->
+        who improved the printing code.
 
         <li>Qun and Sven G&ouml;thel  of
         <a href="https://jausoft.com">G&ouml;thel Software</a> who maintain the JOAL library we use
@@ -544,6 +554,9 @@
         who improved how the throttle handles speed steps and improved the quality of the code and
         documentation.</li>
 
+        <li>Rene Hentschel,
+        who contributed a decoder definition.
+        
         <li>Max Hearnden, <!-- MaxHearnden -->
         who improved how local HTML help is handled.</li>
 
@@ -610,7 +623,7 @@
         </li>
 
         <li>Timothy Jump,   <!-- E3t1jump -->
-        who worked on the TMCC documentation.
+        who worked on TMCC development and documentation.
         </li>
         
         <li>Georg Kautzsch, who provided a decoder definition for the Uhlenbrock 67800 servo

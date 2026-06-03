@@ -135,8 +135,8 @@ public class TransitSection {
     private boolean mAlternate = false;
     private boolean mSafe = false;
     private String mStopAllocatingSensorName = "";
-    private float mFwdStopPerCent;
-    private float mRevStopPerCent;
+    private float mFwdStopPerCent = 1.0f;
+    private float mRevStopPerCent = 1.0f;
 
     // temporary variables and method for delayed initialization of Section
     private String tSectionName = "";
@@ -265,5 +265,5 @@ public class TransitSection {
         return new ArrayList<>(mTransitSectionActionList);
     }
 
-    private final static Logger log = LoggerFactory.getLogger(TransitSection.class);
+    private static final Logger log = LoggerFactory.getLogger(TransitSection.class);
 }

@@ -7,6 +7,7 @@ import org.junit.jupiter.api.*;
 import jmri.web.server.WebServer;
 
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
 /**
@@ -62,10 +63,10 @@ public class MultipartMessageTest {
             log.debug("NPE shutting down web server", npe2);
             //Assert.fail("Null Pointer Exception occured during teardown:" + npe2);
         }
-        JUnitUtil.resetZeroConfServiceManager();
+        assertTrue(JUnitUtil.resetZeroConfServiceManager());
         JUnitUtil.tearDown();
     }
 
-    private final static org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(MultipartMessageTest.class.getName());
+    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(MultipartMessageTest.class.getName());
 
 }

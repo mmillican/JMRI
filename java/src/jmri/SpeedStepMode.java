@@ -17,6 +17,8 @@ import java.util.EnumSet;
  * A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  *
  * @author Austin Hendrix Copyright (C) 2019
+  * with edits/additions by
+ * @author Timothy Jump Copyright (C) 2025
  */
 @javax.annotation.concurrent.Immutable
 public enum SpeedStepMode {
@@ -31,8 +33,12 @@ public enum SpeedStepMode {
     MOTOROLA_28("motorola_28", 28, "SpeedStep28Motorola"), // Motorola 28 speed step mode.
     TMCC1_32("tmcc1_32", 32, "SpeedStep32TMCC1"), // Lionel TMCC 1, 32 speed step mode.
     TMCC2_32("tmcc2_32", 32, "SpeedStep32TMCC2"), // Lionel TMCC 2 Legacy, 32 speed step mode.
-    TMCC1_100("tmcc1_100", 100, "SpeedStep100TMCC1"), // Lionel TMCC ERR, 100 speed step mode.
+    TMCC1_100("tmcc1_100", 100, "SpeedStep100TMCC1"), // Lionel TMCC 1, 100 "relative" speed step mode.
     TMCC2_200("tmcc2_200", 200, "SpeedStep200TMCC2"), // Lionel TMCC 2 Legacy, 200 speed step mode.
+    TMCC1TR_32("tmcc1tr_32", 32, "SpeedStep32TMCC1TR"), // Lionel TMCC 1 TR, 32 speed step mode.
+    TMCC2TR_32("tmcc2tr_32", 32, "SpeedStep32TMCC2TR"), // Lionel TMCC 2 Legacy TR, 32 speed step mode.
+    TMCC1TR_100("tmcc1tr_100", 100, "SpeedStep100TMCC1TR"), // Lionel TMCC 1 TR, 100 "relative" speed step mode.
+    TMCC2TR_200("tmcc2tr_200", 200, "SpeedStep200TMCC2TR"), // Lionel TMCC 2 Legacy TR, 200 speed step mode.
     INCREMENTAL("incremental", 1, 1.0f, "SpeedStepIncremental");
 
     SpeedStepMode(String name, int numSteps, String description) {
@@ -76,7 +82,7 @@ public enum SpeedStepMode {
      * @return matching SpeedStepMode
      * @throws IllegalArgumentException if name does not correspond to a valid speed step mode.
      */
-    static public SpeedStepMode getByName(String name) {
+    public static SpeedStepMode getByName(String name) {
         for (SpeedStepMode s : SpeedStepMode.values()) {
             if (s.name.equals(name)) {
                 return s;
@@ -92,7 +98,7 @@ public enum SpeedStepMode {
      * @return matching SpeedStepMode
      * @throws IllegalArgumentException if name does not correspond to a valid speed step mode.
      */
-    static public SpeedStepMode getByDescription(String name) {
+    public static SpeedStepMode getByDescription(String name) {
         for (SpeedStepMode s : SpeedStepMode.values()) {
             if (s.description.equals(name)) {
                 return s;
@@ -101,7 +107,7 @@ public enum SpeedStepMode {
         throw new IllegalArgumentException("Invalid speed step mode: " + name);
     }
 
-    static public EnumSet<SpeedStepMode> getCompatibleModes(
+    public static EnumSet<SpeedStepMode> getCompatibleModes(
             EnumSet<SpeedStepMode> command_station_modes,
             EnumSet<SpeedStepMode> decoder_modes) {
         EnumSet<SpeedStepMode> result = command_station_modes.clone();
@@ -109,14 +115,14 @@ public enum SpeedStepMode {
         return result;
     }
 
-    static public SpeedStepMode bestCompatibleMode(
+    public static SpeedStepMode bestCompatibleMode(
             EnumSet<SpeedStepMode> command_station_modes,
             EnumSet<SpeedStepMode> decoder_modes) {
         EnumSet<SpeedStepMode> result = getCompatibleModes(command_station_modes, decoder_modes);
         return bestMode(result);
     }
 
-    static public SpeedStepMode bestMode(EnumSet<SpeedStepMode> modes) {
+    public static SpeedStepMode bestMode(EnumSet<SpeedStepMode> modes) {
         if(modes.contains(NMRA_DCC_128)) {
             return NMRA_DCC_128;
         } else if(modes.contains(TMCC1_32)) {
@@ -133,7 +139,7 @@ public enum SpeedStepMode {
         return UNKNOWN;
     }
 
-    static public EnumSet<SpeedStepMode> getCompatibleModesForProtocol(LocoAddress.Protocol protocol) {
+    public static EnumSet<SpeedStepMode> getCompatibleModesForProtocol(LocoAddress.Protocol protocol) {
         switch (protocol) {
             case DCC:
             case DCC_LONG:

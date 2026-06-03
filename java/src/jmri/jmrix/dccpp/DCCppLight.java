@@ -5,7 +5,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Implementation of the Light Object for DCC++
+ * Implementation of the Light Object for DCC-EX
  * <p>
  * NOTE: This is a simplification of the DCCppTurnout class.
  * <p>
@@ -127,7 +127,7 @@ public class DCCppLight extends AbstractLight implements DCCppListener {
 
     /**
      * {@inheritDoc}
-     * Handle an incoming message from the DCC++ Base Station.
+     * Handle an incoming message from the DCC-EX Base Station.
      * <p>
      * NOTE: We aren't registered as a listener, so this is only triggered
      * when we send out a message
@@ -140,7 +140,7 @@ public class DCCppLight extends AbstractLight implements DCCppListener {
 
     /**
      * {@inheritDoc}
-     * Listen for messages to the DCC++ Base Station.
+     * Listen for messages to the DCC-EX Base Station.
      */
     @Override
     public void message(DCCppMessage l) {
@@ -153,6 +153,6 @@ public class DCCppLight extends AbstractLight implements DCCppListener {
         log.debug("Notified of timeout on message '{}'", msg);
     }
 
-    private final static Logger log = LoggerFactory.getLogger(DCCppLight.class);
+    private static final Logger log = LoggerFactory.getLogger(DCCppLight.class);
 
 }

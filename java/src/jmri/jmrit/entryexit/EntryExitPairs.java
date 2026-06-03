@@ -96,6 +96,8 @@ public class EntryExitPairs extends VetoableChangeSupport implements Manager<Des
 
     boolean allocateToDispatcher = false;
     boolean absSignalMode = false;
+    boolean quietFail = false;      // Suppress the dialog when a route allocation fails.
+    boolean skipGuiFix = false;     // Skip the thread for setRoute.  This prevents double-click chaining.
 
     public static final int PROMPTUSER = 0x00;
     public static final int AUTOCLEAR = 0x01;
@@ -159,6 +161,22 @@ public class EntryExitPairs extends VetoableChangeSupport implements Manager<Des
 
     public boolean isAbsSignalMode() {
         return absSignalMode;
+    }
+
+    public void setQuietFail(boolean quiet) {
+        quietFail = quiet;
+    }
+
+    public boolean isQuietFail() {
+        return quietFail;
+    }
+
+    public void setSkipGuiFix(boolean skip) {
+        skipGuiFix = skip;
+    }
+
+    public boolean isSkipGuiFix() {
+        return skipGuiFix;
     }
 
     /**
@@ -540,12 +558,14 @@ public class EntryExitPairs extends VetoableChangeSupport implements Manager<Des
                     }
                 }
             } catch (jmri.JmriException e) {
-                log.trace("setMultiPointRoute catches exception", e);
+                log.debug("setMultiPointRoute catches exception", e);
                 // Can be considered normal if route is blocked
-                JmriJOptionPane.showMessageDialog(null,
-                        Bundle.getMessage("MultiPointBlocked"),  // NOI18N
-                        Bundle.getMessage("WarningTitle"),  // NOI18N
-                        JmriJOptionPane.WARNING_MESSAGE);
+                if (!isQuietFail()) {
+                    JmriJOptionPane.showMessageDialog(null,
+                            Bundle.getMessage("MultiPointBlocked"),  // NOI18N
+                            Bundle.getMessage("WarningTitle"),  // NOI18N
+                            JmriJOptionPane.WARNING_MESSAGE);
+                }
             }
         }
         fromPd.setNXButtonState(NXBUTTONINACTIVE);
@@ -1149,10 +1169,10 @@ public class EntryExitPairs extends VetoableChangeSupport implements Manager<Des
 
     jmri.SignalMastLogicManager smlm = InstanceManager.getDefault(jmri.SignalMastLogicManager.class);
 
-    public final static int CANCELROUTE = 0;
-    public final static int CLEARROUTE = 1;
-    public final static int EXITROUTE = 2;
-    public final static int STACKROUTE = 4;
+    public static final int CANCELROUTE = 0;
+    public static final int CLEARROUTE = 1;
+    public static final int EXITROUTE = 2;
+    public static final int STACKROUTE = 4;
 
    /**
      * Return a point from a given LE Panel.

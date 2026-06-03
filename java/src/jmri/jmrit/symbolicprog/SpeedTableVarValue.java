@@ -933,7 +933,7 @@ public class SpeedTableVarValue extends VariableValue implements ChangeListener 
      *
      * @author   Bob Jacobsen   Copyright (C) 2001
      */
-    public class VarSlider extends JSlider {
+    public static class VarSlider extends JSlider {
 
         VarSlider(BoundedRangeModel m, CvValue var, int step) {
             super(m);
@@ -992,6 +992,6 @@ public class SpeedTableVarValue extends VariableValue implements ChangeListener 
     }
 
     // initialize logging
-    private final static Logger log = LoggerFactory.getLogger(SpeedTableVarValue.class);
+    private static final Logger log = LoggerFactory.getLogger(SpeedTableVarValue.class);
 
 }

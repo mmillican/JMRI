@@ -27,13 +27,17 @@ import jmri.util.swing.JemmyUtil;
  */
 public class InterchangeEditFrameTest extends OperationsTestCase {
 
-    final static int ALL = Track.EAST + Track.WEST + Track.NORTH + Track.SOUTH;
+    static final int ALL = Track.EAST + Track.WEST + Track.NORTH + Track.SOUTH;
     private LocationManager lManager = null;
     private Location l = null;
 
     @Test
     public void testAddInterchange() {
         Assume.assumeFalse(GraphicsEnvironment.isHeadless());
+        
+        // improve test coverage by having a through train
+        JUnitOperationsUtil.loadTrainServingAllExistingLocations();
+        
         InterchangeEditFrame f = new InterchangeEditFrame();
         f.setTitle("Test Interchange Add Frame");
         f.setLocation(0, 0); // entire panel must be visible for tests to work properly

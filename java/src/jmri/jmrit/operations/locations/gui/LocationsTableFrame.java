@@ -91,6 +91,8 @@ public class LocationsTableFrame extends OperationsFrame {
         toolMenu.addSeparator();
         toolMenu.add(new ModifyLocationsAction());
         toolMenu.add(new ModifyLocationsCarLoadsAction());
+        toolMenu.add(new ModifyLocationsQuickServiceAction());
+        
         toolMenu.addSeparator();
         toolMenu.add(new ExportLocationsRosterAction());
         toolMenu.add(new ImportLocationsRosterAction() );
@@ -153,5 +155,5 @@ public class LocationsTableFrame extends OperationsFrame {
         super.dispose();
     }
 
-    private final static Logger log = LoggerFactory.getLogger(LocationsTableFrame.class);
+    private static final Logger log = LoggerFactory.getLogger(LocationsTableFrame.class);
 }

@@ -39,12 +39,12 @@ public class ArchitectureTest {
 
     // want these statics first in class, to initialize
     // logging before various static items are constructed
-    @BeforeAll  // tests are static
-    static public void setUp() {
+    @BeforeAll  // tests are static.
+    public static void setUp() {
         jmri.util.JUnitUtil.setUp();
     }
     @AfterAll
-    static public void tearDown() {
+    public static void tearDown() {
         jmri.util.JUnitUtil.tearDown();
     }
 
@@ -57,6 +57,9 @@ public class ArchitectureTest {
                                 .doNotHaveFullyQualifiedName("jmri.util.swing.JmriMouseEvent").and()
                                 .doNotHaveFullyQualifiedName("jmri.util.swing.JmriMouseListener").and()
                                 .doNotHaveFullyQualifiedName("jmri.util.swing.JmriMouseMotionListener").and()
+
+                                .doNotHaveFullyQualifiedName("apps.Apps").and()
+                                .doNotHaveFullyQualifiedName("apps.gui3.Apps3").and()
 
                                 .doNotHaveFullyQualifiedName("apps.SystemConsole$PopupListener").and()
                                 .doNotHaveFullyQualifiedName("apps.startup.StartupActionsPreferencesPanel$1").and()

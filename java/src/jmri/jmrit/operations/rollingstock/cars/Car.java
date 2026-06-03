@@ -63,9 +63,6 @@ public class Car extends RollingStock {
     public static final String PASSENGER_EXTENSION = Bundle.getMessage("(P)");
     public static final String UTILITY_EXTENSION = Bundle.getMessage("(U)");
     public static final String HAZARDOUS_EXTENSION = Bundle.getMessage("(H)");
-    public static final String CLONE = TrainCommon.HYPHEN + "(Clone)"; // NOI18N
-    // parentheses are special chars
-    public static final String CLONE_REGEX = TrainCommon.HYPHEN + "\\(Clone\\)"; // NOI18N
 
     public static final String LOAD_CHANGED_PROPERTY = "Car load changed"; // NOI18N
     public static final String RWE_LOAD_CHANGED_PROPERTY = "Car RWE load changed"; // NOI18N
@@ -90,31 +87,18 @@ public class Car extends RollingStock {
         addPropertyChangeListeners();
     }
 
+    @Override
     public Car copy() {
         Car car = new Car();
-        car.setBuilt(getBuilt());
-        car.setColor(getColor());
-        car.setLength(getLength());
+        super.copy(car);
         car.setLoadName(getLoadName());
-        car.setWeightTons(getWeightTons());
         car.setReturnWhenEmptyLoadName(getReturnWhenEmptyLoadName());
         car.setReturnWhenLoadedLoadName(getReturnWhenLoadedLoadName());
-        car.setNumber(getNumber());
-        car.setOwnerName(getOwnerName());
-        car.setRoadName(getRoadName());
-        car.setTypeName(getTypeName());
-        car.setComment(getComment());
         car.setCarHazardous(isCarHazardous());
         car.setCaboose(isCaboose());
         car.setFred(hasFred());
         car.setPassenger(isPassenger());
-        car.setBlocking(getBlocking());
-        car.setLastTrain(getLastTrain());
-        car.setLastDate(getLastDate());
-        car.setLastLocationId(getLastLocationId());
-        car.setLastTrackId(getLastTrackId());
         car.setLoadGeneratedFromStaging(isLoadGeneratedFromStaging());
-        car.setDivision(getDivision());
         car.loaded = true;
         return car;
     }
@@ -123,7 +107,7 @@ public class Car extends RollingStock {
         boolean old = _hazardous;
         _hazardous = hazardous;
         if (!old == hazardous) {
-            setDirtyAndFirePropertyChange("car hazardous", old ? "true" : "false", hazardous ? "true" : "false"); // NOI18N
+            setDirtyAndFirePropertyChange("car hazardous", old, hazardous); // NOI18N
         }
     }
 
@@ -148,7 +132,7 @@ public class Car extends RollingStock {
         boolean old = _passenger;
         _passenger = passenger;
         if (!old == passenger) {
-            setDirtyAndFirePropertyChange("car passenger", old ? "true" : "false", passenger ? "true" : "false"); // NOI18N
+            setDirtyAndFirePropertyChange("car passenger", old, passenger); // NOI18N
         }
     }
 
@@ -160,7 +144,7 @@ public class Car extends RollingStock {
         boolean old = _fred;
         _fred = fred;
         if (!old == fred) {
-            setDirtyAndFirePropertyChange("car has fred", old ? "true" : "false", fred ? "true" : "false"); // NOI18N
+            setDirtyAndFirePropertyChange("car has fred", old, fred); // NOI18N
         }
     }
 
@@ -272,7 +256,8 @@ public class Car extends RollingStock {
         if (track != null && track.isSpur() && !getScheduleItemId().equals(NONE)) {
             Schedule sch = track.getSchedule();
             if (sch == null) {
-                log.error("Schedule null for car ({}) at spur ({})", toString(), track.getName());
+                log.error("Schedule missing for car ({}) to spur ({}, {})", toString(), track.getLocation().getName(),
+                        track.getName());
             } else {
                 si = sch.getItemById(getScheduleItemId());
             }
@@ -365,6 +350,15 @@ public class Car extends RollingStock {
         return _pickupScheduleId;
     }
 
+    /**
+     * Provides the train schedule name for pick up day if one available, or if
+     * assigned to a train the pick up time.
+     * 
+     * @return If assigned to a train, the car's pick up time. Otherwise if
+     *         there's a train schedule day/name assigned for pick up, the train
+     *         schedule name. Default train schedule names are Sunday through
+     *         Saturday.
+     */
     public String getPickupScheduleName() {
         if (getTrain() != null) {
             return getPickupTime();
@@ -595,7 +589,7 @@ public class Car extends RollingStock {
         boolean old = _caboose;
         _caboose = caboose;
         if (!old == caboose) {
-            setDirtyAndFirePropertyChange("car is caboose", old ? "true" : "false", caboose ? "true" : "false"); // NOI18N
+            setDirtyAndFirePropertyChange("car is caboose", old, caboose); // NOI18N
         }
     }
 
@@ -607,7 +601,7 @@ public class Car extends RollingStock {
         boolean old = _utility;
         _utility = utility;
         if (!old == utility) {
-            setDirtyAndFirePropertyChange("car is utility", old ? "true" : "false", utility ? "true" : "false"); // NOI18N
+            setDirtyAndFirePropertyChange("car is utility", old, utility); // NOI18N
         }
     }
 
@@ -859,6 +853,8 @@ public class Car extends RollingStock {
         if (!status.equals(Track.OKAY)) {
             return status;
         }
+        // is car going to its final destination?
+        removeCarFinalDestination();
         // now check to see if the track has a schedule
         if (track != null && destinationTrack != track && loaded) {
             status = track.scheduleNext(this);
@@ -888,17 +884,28 @@ public class Car extends RollingStock {
      * 
      * @param scheduleItem The schedule item to be applied this this car
      */
-    public void loadNext(ScheduleItem scheduleItem) {
-        if (scheduleItem == null) {
-            return; // should never be null
+    private void loadCarFinalDestination(ScheduleItem scheduleItem) {
+        if (scheduleItem != null && scheduleItem.getDestination() != null) {
+            // set the car's final destination and track
+            setFinalDestination(scheduleItem.getDestination());
+            setFinalDestinationTrack(scheduleItem.getDestinationTrack());
+            // set all cars in kernel same final destination
+            updateKernel();
+        } 
+    }
+    
+    /*
+     * remove the car's final destination if sent to that destination
+     */
+    private void removeCarFinalDestination() {
+        if (getDestination() != null &&
+                getDestination().equals(getFinalDestination()) &&
+                getDestinationTrack() != null &&
+                (getDestinationTrack().equals(getFinalDestinationTrack()) ||
+                        getFinalDestinationTrack() == null)) {
+            setFinalDestination(null);
+            setFinalDestinationTrack(null);
         }
-        // set the car's final destination and track
-        setFinalDestination(scheduleItem.getDestination());
-        setFinalDestinationTrack(scheduleItem.getDestinationTrack());
-        // bump hit count for this schedule item
-        scheduleItem.setHits(scheduleItem.getHits() + 1);
-        // set all cars in kernel same final destination
-        updateKernel();
     }
 
     /**
@@ -994,6 +1001,7 @@ public class Car extends RollingStock {
                 setLoadEmpty();
             }
         }
+        loadCarFinalDestination(si);
         setScheduleItemId(Car.NONE);
     }
 
@@ -1091,32 +1099,34 @@ public class Car extends RollingStock {
 
     /*
      * This routine destroys the clone and restores the cloned car to its
-     * original location and load. Note there can be multiple clones for a car.
-     * Only the first clone created has the right info. A clone has creation
-     * order number appended to the road number.
+     * original location and settings. Note there can be multiple clones for a
+     * car. A clone has uses the original car's road, number, and the creation
+     * order number which is appended to the road number using the CLONE_REGEX
      */
     private void destroyClone() {
         if (isClone()) {
             // move cloned car back to original location
             CarManager carManager = InstanceManager.getDefault(CarManager.class);
+            // get the original car's road and number
             String[] number = getNumber().split(Car.CLONE_REGEX);
             Car car = carManager.getByRoadAndNumber(getRoadName(), number[0]);
-            int cloneCreationNumber = Integer.parseInt(number[1]);
-            if (cloneCreationNumber <= car.getCloneOrder()) {
-                car.setLocation(getLocation(), getTrack(), Car.FORCE);
-                car.setLoadName(getLoadName());
-                car.setLastTrain(getLastTrain());
-                car.setLastRouteId(getLastRouteId());
-                car.setLastDate(getLastDate());
-                car.setFinalDestination(getPreviousFinalDestination());
-                car.setFinalDestinationTrack(getPreviousFinalDestinationTrack());
-                car.setPreviousFinalDestination(getPreviousFinalDestination());
-                car.setPreviousFinalDestinationTrack(getPreviousFinalDestinationTrack());
-                car.setScheduleItemId(getPreviousScheduleId());
-                car.setWait(0);
-                car.setMoves(getMoves());
-                // remember the last clone destroyed
-                car.setCloneOrder(cloneCreationNumber);
+            if (car != null) {
+                int cloneCreationNumber = Integer.parseInt(number[1]);
+                if (cloneCreationNumber <= car.getCloneOrder()) {
+                    // move car back and restore
+                    destroyCloneReset(car);
+                    car.setLoadName(getLoadName());
+                    car.setFinalDestination(getPreviousFinalDestination());
+                    car.setFinalDestinationTrack(getPreviousFinalDestinationTrack());
+                    car.setPreviousFinalDestination(getPreviousFinalDestination());
+                    car.setPreviousFinalDestinationTrack(getPreviousFinalDestinationTrack());
+                    car.setScheduleItemId(getPreviousScheduleId());
+                    car.setWait(0);
+                    // remember the last clone destroyed
+                    car.setCloneOrder(cloneCreationNumber);
+                }
+            } else {
+                log.error("Not able to find and restore car ({}, {})", getRoadName(), number[0]);
             }
             InstanceManager.getDefault(KernelManager.class).deleteKernel(getKernelName());
             carManager.deregister(this);
@@ -1377,6 +1387,6 @@ public class Car extends RollingStock {
         }
     }
 
-    private final static Logger log = LoggerFactory.getLogger(Car.class);
+    private static final Logger log = LoggerFactory.getLogger(Car.class);
 
 }

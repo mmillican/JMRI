@@ -216,14 +216,14 @@ public class JUnitSwingUtilTest {
     }
 
     @BeforeEach
-    public void setUp() throws Exception {
+    public void setUp() {
         JUnitUtil.setUp();
     }
 
     @AfterEach
-    public void tearDown() throws Exception {
+    public void tearDown() {
         JUnitUtil.tearDown();
     }
 
-    // private final static Logger log = LoggerFactory.getLogger(JUnitSwingUtilTest.class);
+    // private static final Logger log = LoggerFactory.getLogger(JUnitSwingUtilTest.class);
 }

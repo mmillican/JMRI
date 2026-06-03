@@ -97,13 +97,15 @@ public class FullBackupExportAction
                     final int thisCount = count;
                     ThreadingUtil.runOnGUIEventually(() -> {dialog.count(thisCount);});
                     try {
-                        copyFileToStream(entry.getPathName(), "roster", zipper, "roster: "+entry.getId());
 
                         // process image files if present
                         if (entry.getImagePath() != null && ! entry.getImagePath().isEmpty())
                             copyFileToStream(entry.getImagePath(), "roster", zipper, "image: "+entry.getId());
                         if (entry.getIconPath() != null && ! entry.getIconPath().isEmpty())
                             copyFileToStream(entry.getIconPath(), "roster", zipper, "icon: "+entry.getId());
+
+                        // store the roster entry itself
+                        copyFileToStream(entry.getPathName(), "roster", zipper, "roster: "+entry.getId());
 
                     } catch (FileNotFoundException ex) {
                         log.error("Unable to find file in entry {}", entry.getId(), ex);
@@ -186,5 +188,5 @@ public class FullBackupExportAction
         throw new IllegalArgumentException("Should not be invoked");
     }
 
-    private final static org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(FullBackupExportAction.class);
+    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(FullBackupExportAction.class);
 }

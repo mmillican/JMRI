@@ -14,6 +14,7 @@ import jmri.jmrit.operations.locations.Track;
 import jmri.jmrit.operations.locations.schedules.*;
 import jmri.jmrit.operations.locations.tools.*;
 import jmri.jmrit.operations.setup.Control;
+import jmri.jmrit.operations.setup.Setup;
 import jmri.util.swing.JmriJOptionPane;
 
 /**
@@ -85,6 +86,7 @@ public class SpurEditFrame extends TrackEditFrame {
         
         // finish
         panelOrder.setVisible(false); // Car order out of spurs is not available
+        panelQuickService.setVisible(Setup.isBuildOnTime());
         pack();
         setVisible(true);
     }
@@ -213,11 +215,14 @@ public class SpurEditFrame extends TrackEditFrame {
                 || e.getPropertyName().equals(Track.SCHEDULE_ID_CHANGED_PROPERTY)) {
             updateScheduleComboBox();
         }
-        if (e.getSource().getClass().equals(Schedule.class) && _track != null) {
+        if (e.getSource().getClass().equals(Schedule.class) && _track != null  ||
+                e.getPropertyName().equals(Track.LOADS_CHANGED_PROPERTY) ||
+                e.getPropertyName().equals(Track.ROADS_CHANGED_PROPERTY) ||
+                e.getPropertyName().equals(Track.TYPES_CHANGED_PROPERTY)) {
             textSchError.setText(_track.checkScheduleValid());
         }
         super.propertyChange(e);
     }
 
-    private final static Logger log = LoggerFactory.getLogger(SpurEditFrame.class);
+    private static final Logger log = LoggerFactory.getLogger(SpurEditFrame.class);
 }

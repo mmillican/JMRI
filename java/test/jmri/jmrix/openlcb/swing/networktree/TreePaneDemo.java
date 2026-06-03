@@ -58,7 +58,7 @@ public class TreePaneDemo {
     MimicNodeStore store;
 
     @BeforeAll
-    static public void checkSeparate() {
+    public static void checkSeparate() {
        // this test is run separately because it leaves a lot of threads behind
         org.junit.Assume.assumeFalse("Ignoring intermittent test", Boolean.getBoolean("jmri.skipTestsRequiringSeparateRunning"));
     }
@@ -103,7 +103,7 @@ public class TreePaneDemo {
         if (!GraphicsEnvironment.isHeadless()) {
             frame.setVisible(false);
             frame.dispose();
-            new org.netbeans.jemmy.QueueTool().waitEmpty(100);  //pause for frame to close
+            new org.netbeans.jemmy.QueueTool().waitEmpty();  //pause for frame to close
         }
         jmri.util.JUnitUtil.tearDown();
         store = null;

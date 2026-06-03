@@ -5,6 +5,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import jmri.InstanceManager;
 
 /**
  * Controls for operations developers. Debug Property changes and instance
@@ -85,6 +86,13 @@ public class Control {
     public static int speedHpt = 36;
     
     public static boolean showCloneCars = true;
+    
+    public static int numberOfDays = 31; // one month
+    
+    public static void setMaxCharLength(int length) {
+        max_len_string_attibute = length;
+        InstanceManager.getDefault(OperationsSetupXml.class).setDirty(true);
+    }
 
     // must synchronize changes with operation-config.dtd
     public static Element store() {
@@ -133,6 +141,9 @@ public class Control {
         // show clones?
         e.addContent(values = new Element(Xml.DISPLAY));
         values.setAttribute(Xml.SHOW_CLONES, showCloneCars ? Xml.TRUE : Xml.FALSE);
+        // days
+        e.addContent(values = new Element(Xml.DAYS));
+        values.setAttribute(Xml.LENGTH, Integer.toString(numberOfDays));
         return e;
     }
 
@@ -243,7 +254,18 @@ public class Control {
                 showCloneCars = a.getValue().equals(Xml.TRUE);
             }
         }
+        Element eDays = eControl.getChild(Xml.DAYS);
+        if (eDays != null) {
+            Attribute a;
+            if ((a = eDays.getAttribute(Xml.LENGTH)) != null) {
+                try {
+                    numberOfDays = a.getIntValue();
+                } catch (DataConversionException e1) {
+                    log.error("Number of days ({}) isn't a number", a.getValue());
+                }
+            }
+        }
     }
 
-    private final static Logger log = LoggerFactory.getLogger(Control.class);
+    private static final Logger log = LoggerFactory.getLogger(Control.class);
 }

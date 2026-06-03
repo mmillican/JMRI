@@ -72,7 +72,7 @@ public class DestinationPoints extends jmri.implementation.AbstractNamedBean {
 
     transient SignalMastLogic sml;
 
-    final static int NXMESSAGEBOXCLEARTIMEOUT = 30;
+    static final int NXMESSAGEBOXCLEARTIMEOUT = 30;
 
     /**
      * public for testing purposes.
@@ -496,7 +496,9 @@ public class DestinationPoints extends jmri.implementation.AbstractNamedBean {
                             }
 
                             //Remove the first block as it is our start block
-                            routeDetails.remove(0);
+                            if (routeDetails != null && !routeDetails.isEmpty()) {
+                                routeDetails.remove(0);
+                            }
 
                             synchronized (this) {
                                 releaseMast(smSource, turnoutSettings);
@@ -842,11 +844,10 @@ public class DestinationPoints extends jmri.implementation.AbstractNamedBean {
         }
 
         // The block list for an interlocking NX still has the facing block if there are no signals.
-        boolean facing = getSource().getStart().getUseExtraColor();
+        LayoutBlock facing = getSource().getStart();
         for (LayoutBlock blk : routeDetails) {
-            if (facing) {
-                // skip the facing block when there is an active NX pair immediately before this one.
-                facing = false;
+            if (blk == facing) {
+                // Skip the facing block if it is still in the block list.
                 continue;
             }
             if ((getEntryExitType() == EntryExitPairs.FULLINTERLOCK)) {
@@ -1005,7 +1006,7 @@ public class DestinationPoints extends jmri.implementation.AbstractNamedBean {
                 return;
             } else {
                 LayoutBlock startlBlock = src.getStart();
-                
+
                 List<BestPath> pathList = new ArrayList<>(2);
                 LayoutBlock protectLBlock;
                 LayoutBlock destinationLBlock;
@@ -1166,14 +1167,19 @@ public class DestinationPoints extends jmri.implementation.AbstractNamedBean {
                     setActiveEntryExit(true, reverseDirection);
                 }
 
-                log.debug("[activeBean] Start setRoute thread, dp = {}", getUserName());
-                ThreadingUtil.newThread(() -> {
-                    try {
-                        setRoute(true);
-                    } catch (Exception e) {
-                        log.error("[activeBean] setRoute thread exception: {}", e.getMessage());
-                    }
-                }).start();
+                if (manager.isSkipGuiFix()) {
+                    log.debug("[activeBean] Start setRoute without thread, dp = {}", getUserName());
+                    setRoute(true);
+                } else {
+                    log.debug("[activeBean] Start setRoute thread, dp = {}", getUserName());
+                    ThreadingUtil.newThread(() -> {
+                        try {
+                            setRoute(true);
+                        } catch (Exception e) {
+                            log.error("[activeBean] setRoute thread exception: {}", e.getMessage());
+                        }
+                    }, "NX set route thread").start();
+                }
             }
         }
     }

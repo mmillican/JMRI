@@ -112,10 +112,11 @@ package jmri.util.org.mitre.jawb.swing;
 
 import java.awt.*;
 import java.awt.event.*;
-import javax.swing.*;
-import javax.swing.event.MouseInputAdapter;
 import java.util.HashMap;
 import java.util.Iterator;
+
+import javax.swing.*;
+import javax.swing.event.MouseInputAdapter;
 
 // added as part of migration to JMRI
 import jmri.util.JmriJFrame;
@@ -169,6 +170,8 @@ public class DetachableTabbedPane extends JTabbedPane {
    * placement of either: <code>JTabbedPane.TOP</code>,
    * <code>JTabbedPane.BOTTOM</code>, <code>JTabbedPane.LEFT</code>, or
    * <code>JTabbedPane.RIGHT</code>, and specified detachability.
+ * @param tabPlacement tab placement
+ * @param detachable true if detachable
    */
   public DetachableTabbedPane (int tabPlacement, boolean detachable) {
     super (tabPlacement);
@@ -179,6 +182,9 @@ public class DetachableTabbedPane extends JTabbedPane {
   /**
    * Creates an empty <code>DetachableTabbedPane</code> with the specified tab
    * placement and tab layout policy.
+ * @param tabPlacement tab placement
+ * @param tabLayoutPolicy tab layout policy
+ * @param detachable true if detachable
    */
   public DetachableTabbedPane (int tabPlacement, int tabLayoutPolicy,
                                boolean detachable) {
@@ -297,6 +303,13 @@ public class DetachableTabbedPane extends JTabbedPane {
 
   /**
    * Returns the default Detachable.
+ * @param title title
+ * @param icon icon
+ * @param comp component
+ * @param tip tool tip
+ * @param index index
+ * @param titleSuffix title suffix
+ * @return default Detachable
    */
   protected Detachable createDetachable (String title, Icon icon,
                                          Component comp,
@@ -307,6 +320,8 @@ public class DetachableTabbedPane extends JTabbedPane {
   /**
    * Lookup the Detachable for the specified component, which must have been
    * added as a tab. Returns null if not already added.
+ * @param comp component
+ * @return Returns null if not already added
    */
   protected Detachable getDetachable(Component comp) {
     return panelToDetMap.get(comp);
@@ -315,6 +330,7 @@ public class DetachableTabbedPane extends JTabbedPane {
   /**
    * Return Detachables which have been added as Tabs or Detached Frames. TODO:
    * Currently, order is not accurate.
+ * @return Detachables
    */
   protected Detachable[] getDetachables() {
     return panelToDetMap.values().toArray(new Detachable[0]);
@@ -327,6 +343,7 @@ public class DetachableTabbedPane extends JTabbedPane {
   @Override
   public void insertTab (String title, Icon icon, Component comp,
                          String tip, int index) {
+    log.debug("insertTab {} at index {}", title, index);
     // the index we get is based on the number of tabs show, not the number of
     // components, so to remain consistent create the Detachable with an index
     // based on the number of detachables we have
@@ -341,6 +358,27 @@ public class DetachableTabbedPane extends JTabbedPane {
       detach (d);
     else
       attach (d);
+  }
+  
+  @Override
+  public void setComponentAt(int index, Component component) {
+    log.debug("setComponentAt name = {} index = {}", getTitleAt(index), index);
+    
+    var oldcomp = getComponentAt(index);
+    var detachable = panelToDetMap.get(oldcomp);
+    panelToDetMap.remove(oldcomp);
+    
+    panelToDetMap.put(component, detachable);
+    detachable.component = component;
+    
+    super.setComponentAt(index, component);
+  }
+
+  // just adds logging
+  @Override
+  public void addTab(String name, Component component) {
+    log.debug("addTab name = {} count = {}", name, getTabCount());
+    super.addTab(name, component);
   }
   
   /**
@@ -390,7 +428,7 @@ public class DetachableTabbedPane extends JTabbedPane {
       d.setDetached (true);
     }
   }
-  
+    
   /**
    * Bypass insertTab and add internal panel to the tabbedpane
    */
@@ -398,7 +436,7 @@ public class DetachableTabbedPane extends JTabbedPane {
     int ti;
     for (ti=0; ti<getTabCount(); ti++) {
       Detachable tabD = panelToDetMap.get (getComponentAt(ti));
-      if (tabD.index > d.index)
+      if (tabD != null && tabD.index > d.index)
         break;
     }
     d.setDetached (false);
@@ -457,12 +495,15 @@ public class DetachableTabbedPane extends JTabbedPane {
       return (x <= cx) && (cx <= x+icon.getIconWidth()) &&
         (y <= cy) && (cy <= y+icon.getIconHeight());
     }
+    @Override
     public int getIconHeight () {
       return icon.getIconHeight();
     }
+    @Override
     public int getIconWidth () {
       return icon.getIconWidth();
     }
+    @Override
     public void paintIcon (Component c, Graphics g, int px, int py) {
       x = px;
       y = py;
@@ -610,5 +651,7 @@ public class DetachableTabbedPane extends JTabbedPane {
 //     frame.pack();
 //     frame.setVisible(true);
 //   }
+
+    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(DetachableTabbedPane.class);
 
 }

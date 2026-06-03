@@ -169,7 +169,7 @@ public abstract class TrackTableModel extends OperationsTableModel implements Pr
         tcm.setColumnVisible(tcm.getColumnByModelIndex(DISABLE_LOAD_CHANGE_COLUMN),
                 _location.hasDisableLoadChange() && _trackType.equals(Track.SPUR));
         tcm.setColumnVisible(tcm.getColumnByModelIndex(QUICK_SERVICE_COLUMN),
-                _location.hasQuickService() && (_trackType.equals(Track.SPUR) || _trackType.equals(Track.INTERCHANGE)));
+                _location.hasQuickService());
         tcm.setColumnVisible(tcm.getColumnByModelIndex(SHIP_COLUMN), _location.hasShipLoadRestrictions());
         tcm.setColumnVisible(tcm.getColumnByModelIndex(ROAD_COLUMN), _location.hasRoadRestrictions());
         tcm.setColumnVisible(tcm.getColumnByModelIndex(DESTINATION_COLUMN), _location.hasDestinationRestrictions() &&
@@ -719,5 +719,5 @@ public abstract class TrackTableModel extends OperationsTableModel implements Pr
         // do nothing
     }
 
-    private final static Logger log = LoggerFactory.getLogger(TrackTableModel.class);
+    private static final Logger log = LoggerFactory.getLogger(TrackTableModel.class);
 }

@@ -42,9 +42,10 @@ public class YardEditFrame extends TrackEditFrame {
         // finish
         dropPanel.setVisible(false); // don't show drop and pick up panel
         pickupPanel.setVisible(false);
+        panelQuickService.setVisible(true);
         pack();
         setVisible(true);
     }
 
-//    private final static Logger log = LoggerFactory.getLogger(YardEditFrame.class);
+//    private static final Logger log = LoggerFactory.getLogger(YardEditFrame.class);
 }

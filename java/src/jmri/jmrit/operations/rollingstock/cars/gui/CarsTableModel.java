@@ -24,7 +24,7 @@ import jmri.util.table.ButtonRenderer;
 /**
  * Table Model for edit of cars used by operations
  *
- * @author Daniel Boudreau Copyright (C) 2008, 2011, 2012, 2016, 2025
+ * @author Daniel Boudreau Copyright (C) 2008, 2011, 2012, 2016, 2025, 2026
  */
 public class CarsTableModel extends OperationsTableModel implements PropertyChangeListener {
 
@@ -237,7 +237,7 @@ public class CarsTableModel extends OperationsTableModel implements PropertyChan
             case SORTBY_COMMENT:
                 return Bundle.getMessage("Comment");
             default:
-                return "Error"; // NOI18N
+                return Bundle.getMessage("ErrorTitle"); // NOI18N
         }
     }
 
@@ -574,6 +574,11 @@ public class CarsTableModel extends OperationsTableModel implements PropertyChan
         if (car == null) {
             return "ERROR car unknown " + row; // NOI18N
         }
+        if (car.isClone()) {
+            setToolTip(Bundle.getMessage("DoNotModifyClone", car.toString()), col);
+        } else {
+            setToolTip(null, col);
+        }
         switch (col) {
             case SELECT_COLUMN:
                 return car.isSelected();
@@ -611,6 +616,11 @@ public class CarsTableModel extends OperationsTableModel implements PropertyChan
                 if (car.getDestination() != null) {
                     s = car.getDestinationName() + " (" + car.getDestinationTrackName() + ")";
                 }
+                if (log.isDebugEnabled() &&
+                        car.getDestinationTrack() != null &&
+                        car.getDestinationTrack().getSchedule() != null) {
+                    s = s + " " + car.getScheduleItemId() + " ";
+                }
                 if (car.getFinalDestination() != null) {
                     s = s + "->" + car.getFinalDestinationName(); // NOI18N
                 }
@@ -618,6 +628,7 @@ public class CarsTableModel extends OperationsTableModel implements PropertyChan
                     s = s + " (" + car.getFinalDestinationTrackName() + ")";
                 }
                 if (log.isDebugEnabled() &&
+                        !s.contains(car.getScheduleItemId()) &&
                         car.getFinalDestinationTrack() != null &&
                         car.getFinalDestinationTrack().getSchedule() != null) {
                     s = s + " " + car.getScheduleItemId();
@@ -715,7 +726,6 @@ public class CarsTableModel extends OperationsTableModel implements PropertyChan
                 car.setSelected(((Boolean) value).booleanValue());
                 break;
             case SET_COLUMN:
-                log.debug("Set car");
                 if (csf != null) {
                     csf.dispose();
                 }
@@ -727,7 +737,6 @@ public class CarsTableModel extends OperationsTableModel implements PropertyChan
                 });
                 break;
             case EDIT_COLUMN:
-                log.debug("Edit car");
                 if (cef != null) {
                     cef.dispose();
                 }
@@ -812,5 +821,5 @@ public class CarsTableModel extends OperationsTableModel implements PropertyChan
         }
     }
 
-    private final static Logger log = LoggerFactory.getLogger(CarsTableModel.class);
+    private static final Logger log = LoggerFactory.getLogger(CarsTableModel.class);
 }

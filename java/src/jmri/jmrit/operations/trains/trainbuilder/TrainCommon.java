@@ -25,6 +25,7 @@ import jmri.jmrit.operations.setup.Control;
 import jmri.jmrit.operations.setup.Setup;
 import jmri.jmrit.operations.trains.*;
 import jmri.util.ColorUtil;
+import jmri.util.davidflanagan.HardcopyWriter;
 
 /**
  * Common routines for trains
@@ -34,7 +35,7 @@ import jmri.util.ColorUtil;
  */
 public class TrainCommon {
 
-    protected static final String TAB = "    "; // NOI18N
+    protected String tab = tabString("", Setup.getManifestTabLength()); // NOI18N
     protected static final String NEW_LINE = "\n"; // NOI18N
     public static final String SPACE = " ";
     public static final String BLANK_LINE = " ";
@@ -45,6 +46,8 @@ public class TrainCommon {
     protected static final String TEXT_COLOR_START = "<FONT color=\"";
     protected static final String TEXT_COLOR_DONE = "\">";
     protected static final String TEXT_COLOR_END = "</FONT>";
+    protected static final String TEXT_BOLD = "<b>";
+    protected static final String TEXT_BOLD_END = "</b>";
 
     // when true a pick up, when false a set out
     protected static final boolean PICKUP = true;
@@ -125,7 +128,7 @@ public class TrainCommon {
             String s = getEngineAttribute(engine, attribute, PICKUP);
             if (!checkStringLength(buf.toString() + s, isManifest)) {
                 addLine(file, buf, Setup.getPickupEngineColor());
-                buf = new StringBuffer(TAB); // new line
+                buf = new StringBuffer(tab); // new line
             }
             buf.append(s);
         }
@@ -162,7 +165,7 @@ public class TrainCommon {
             String s = getEngineAttribute(engine, attribute, !PICKUP);
             if (!checkStringLength(buf.toString() + s, isManifest)) {
                 addLine(file, buf, Setup.getDropEngineColor());
-                buf = new StringBuffer(TAB); // new line
+                buf = new StringBuffer(tab); // new line
             }
             buf.append(s);
         }
@@ -250,7 +253,6 @@ public class TrainCommon {
 
     private void blockCarsPickups(PrintWriter file, Train train, List<Car> carList, RouteLocation rl,
             Track track, boolean isManifest) {
-        // block pick up cars, except for passenger cars
         for (RouteLocation rld : train.getTrainBlockingOrder()) {
             for (Car car : carList) {
                 if (Setup.isSortByTrackNameEnabled() &&
@@ -321,11 +323,11 @@ public class TrainCommon {
 
     /**
      * Used to determine if car is the next to be processed when producing
-     * Manifests or Switch Lists. Caboose or FRED is placed at end of the train.
-     * Passenger cars are already blocked in the car list. Passenger cars with
-     * negative block numbers are placed at the front of the train, positive
-     * numbers at the end of the train. Note that a car in train doesn't have a
-     * track assignment.
+     * Manifests or Switch Lists. Caboose or FRED is placed at end of the train
+     * unless they are also passenger cars. Passenger cars are already blocked
+     * in the car list. Passenger cars with negative block numbers are placed at
+     * the front of the train, positive numbers at the end of the train. Note
+     * that a car in train doesn't have a track assignment.
      * 
      * @param car the car being tested
      * @param rl  when in train's route the car is being pulled
@@ -335,7 +337,7 @@ public class TrainCommon {
     public static boolean isNextCar(Car car, RouteLocation rl, RouteLocation rld) {
         return isNextCar(car, rl, rld, false);
     }
-        
+
     public static boolean isNextCar(Car car, RouteLocation rl, RouteLocation rld, boolean isIgnoreTrack) {
         Train train = car.getTrain();
         if (train != null &&
@@ -345,13 +347,13 @@ public class TrainCommon {
                         !car.isCaboose() &&
                         !car.hasFred() &&
                         !car.isPassenger() ||
-                        rld == train.getTrainDepartsRouteLocation() &&
-                                car.isPassenger() &&
-                                car.getBlocking() < 0 ||
-                        rld == train.getTrainTerminatesRouteLocation() &&
-                                (car.isCaboose() ||
-                                        car.hasFred() ||
-                                        car.isPassenger() && car.getBlocking() >= 0))) {
+                        car.isPassenger() &&
+                                car.getBlocking() < 0 &&
+                                rld == train.getRoute().getBlockingLocationFrontOfTrain() ||
+                        (car.isCaboose() && !car.isPassenger() ||
+                                car.hasFred() && !car.isPassenger() ||
+                                car.isPassenger() && car.getBlocking() >= 0) &&
+                                rld == train.getRoute().getBlockingLocationRearOfTrain())) {
             return true;
         }
         return false;
@@ -612,14 +614,14 @@ public class TrainCommon {
         }
     }
 
-    protected void setCarPickupAndSetoutTimes(Train train, RouteLocation rl, List<Car> carList) {
+    protected void setPickupAndSetoutTimes(Train train, RouteLocation rl, List<RollingStock> list) {
         String expectedDepartureTime = train.getExpectedDepartureTime(rl, true);
-        for (Car car : carList) {
-            if (car.getRouteLocation() == rl) {
-                car.setPickupTime(expectedDepartureTime);
+        for (RollingStock rs : list) {
+            if (rs.getRouteLocation() == rl) {
+                rs.setPickupTime(expectedDepartureTime);
             }
-            if (car.getRouteDestination() == rl) {
-                car.setSetoutTime(expectedDepartureTime);
+            if (rs.getRouteDestination() == rl) {
+                rs.setSetoutTime(expectedDepartureTime);
             }
         }
 
@@ -646,19 +648,17 @@ public class TrainCommon {
                             new Object[]{routeLocationName,
                                     train.getFormatedDepartureTime(), train.getSplitName(),
                                     train.getDescription(), rl.getLocation().getDivisionName()});
-                } else if (!rl.getDepartureTime().equals(RouteLocation.NONE) &&
+                } else if (!rl.getDepartureTimeHourMinutes().equals(RouteLocation.NONE) &&
                         rl != train.getTrainTerminatesRouteLocation()) {
                     // Scheduled work at {0}, departure time {1}
                     msg = MessageFormat.format(messageFormatText = TrainManifestText
                             .getStringWorkDepartureTime(),
-                            new Object[]{routeLocationName,
-                                    expectedArrivalTime.equals(Train.ALREADY_SERVICED)
-                                            ? rl.getFormatedDepartureTime() : train.getExpectedDepartureTime(rl),
+                            new Object[]{routeLocationName, train.getExpectedDepartureTime(rl),
                                     train.getSplitName(), train.getDescription(),
                                     rl.getLocation().getDivisionName()});
                 } else if (Setup.isUseDepartureTimeEnabled() &&
                         rl != train.getTrainTerminatesRouteLocation() &&
-                        !train.getExpectedDepartureTime(rl).equals(Train.ALREADY_SERVICED)) {
+                        !expectedArrivalTime.equals(Train.ALREADY_SERVICED)) {
                     // Scheduled work at {0}, departure time {1}
                     msg = MessageFormat.format(messageFormatText = TrainManifestText
                             .getStringWorkDepartureTime(),
@@ -715,7 +715,7 @@ public class TrainCommon {
             } else if (Setup.isUseSwitchListDepartureTimeEnabled() &&
                     rl == train.getCurrentRouteLocation() &&
                     rl != train.getTrainTerminatesRouteLocation() &&
-                    !rl.getDepartureTime().equals(RouteLocation.NONE)) {
+                    !rl.getDepartureTimeHourMinutes().equals(RouteLocation.NONE)) {
                 // Departs {0} {1}bound at {2}
                 msg = MessageFormat.format(messageFormatText = TrainSwitchListText.getStringDepartsAt(),
                         new Object[]{splitString(rl.getName()), rl.getTrainDirectionString(),
@@ -858,7 +858,7 @@ public class TrainCommon {
             String s = getCarAttribute(car, attribute, PICKUP, !LOCAL);
             if (!checkStringLength(buf.toString() + s, isManifest)) {
                 addLine(file, buf, Setup.getPickupColor());
-                buf = new StringBuffer(TAB); // new line
+                buf = new StringBuffer(tab); // new line
             }
             buf.append(s);
         }
@@ -950,7 +950,7 @@ public class TrainCommon {
             String s = getCarAttribute(car, attribute, !PICKUP, isLocal);
             if (!checkStringLength(buf.toString() + s, isManifest)) {
                 addLine(file, buf, isLocal ? Setup.getLocalColor() : Setup.getDropColor());
-                buf = new StringBuffer(TAB); // new line
+                buf = new StringBuffer(tab); // new line
             }
             buf.append(s);
         }
@@ -1377,8 +1377,10 @@ public class TrainCommon {
                 if (checkStringLength(sb.toString() + word, isManifest)) {
                     sb.append(word + SPACE);
                 } else {
-                    sb.setLength(sb.length() - 1); // remove last space added to string
-                    addLine(file, sb.toString());
+                    if (sb.length() > 0) {
+                        sb.setLength(sb.length() - 1); // remove last space added to string
+                        addLine(file, sb.toString());
+                    }
                     sb = new StringBuffer(word + SPACE);
                 }
             }
@@ -1729,10 +1731,14 @@ public class TrainCommon {
                         InstanceManager.getDefault(TrainManager.class).getMaxTrainNameLength());
                 return Setup.isPrintHeadersEnabled() ? lastTrainName
                         : TrainManifestHeaderText.getStringHeader_Last_Train() + SPACE + lastTrainName;
-            }
-            // the three utility attributes that don't get printed but need to
-              // be tabbed out
-            else if (attribute.equals(Setup.NO_NUMBER)) {
+            } else if (attribute.equals(Setup.LAST_MOVED)) {
+                // date format: 05/19/2026 07:12:58
+                return padAndTruncateIfNeeded(rs.getLastDate(), RollingStock.DATE_TIME_LENGTH);
+            } else if (attribute.equals(Setup.LAST_LOCATION)) {
+                return padAndTruncateIfNeeded(rs.getLastLocationName(), locationManager.getMaxLocationNameLength());
+                // the three utility attributes that don't get printed but need to
+                // be tabbed out
+            } else if (attribute.equals(Setup.NO_NUMBER)) {
                 return padAndTruncateIfNeeded("",
                         Control.max_len_string_print_road_number - (UTILITY_CAR_COUNT_FIELD_SIZE + 1));
             } else if (attribute.equals(Setup.NO_ROAD)) {
@@ -2026,6 +2032,12 @@ public class TrainCommon {
             } else if (attribute.equals(Setup.LAST_TRAIN)) {
                 buf.append(padAndTruncateIfNeeded(TrainManifestHeaderText.getStringHeader_Last_Train(),
                         InstanceManager.getDefault(TrainManager.class).getMaxTrainNameLength()) + SPACE);
+            } else if (attribute.equals(Setup.LAST_MOVED)) {
+                buf.append(padAndTruncateIfNeeded(TrainManifestHeaderText.getStringHeader_Last_Moved(),
+                        RollingStock.DATE_TIME_LENGTH) + SPACE);
+            } else if (attribute.equals(Setup.LAST_LOCATION)) {
+                buf.append(padAndTruncateIfNeeded(TrainManifestHeaderText.getStringHeader_Last_Location(),
+                        InstanceManager.getDefault(LocationManager.class).getMaxLocationNameLength()) + SPACE);
             } else if (attribute.equals(Setup.TAB)) {
                 buf.append(createTabIfNeeded(Setup.getTab1Length()));
             } else if (attribute.equals(Setup.TAB2)) {
@@ -2158,9 +2170,9 @@ public class TrainCommon {
     /*
      * Converts String time DAYS:HH:MM and DAYS:HH:MM AM/PM to minutes from
      * midnight. Note that the string time could be blank, and in that case
-     * returns 0 minutes. 
+     * returns 0 minutes.
      */
-    protected int convertStringTime(String time) {
+    public static int convertStringTime(String time) {
         int minutes = 0;
         boolean hrFormat = false;
         String[] splitTimePM = time.split(SPACE);
@@ -2180,7 +2192,7 @@ public class TrainCommon {
             minutes += 24 * 60 * Integer.parseInt(splitTime[0]);
             minutes += 60 * Integer.parseInt(splitTime[1]);
             minutes += Integer.parseInt(splitTime[2]);
-        } else if (splitTime.length  == 2){
+        } else if (splitTime.length == 2) {
             // hrs:minutes
             if (hrFormat && splitTime[0].equals("12")) {
                 splitTime[0] = "00";
@@ -2190,6 +2202,15 @@ public class TrainCommon {
         }
         log.debug("convert time {} to minutes {}", time, minutes);
         return minutes;
+    }
+
+    public String convertMinutesTime(int minutes) {
+        int days = minutes / (24 * 60);
+        int h = (minutes - (days * 24 * 60)) / 60;
+        String sHours = String.format("%02d", h);
+        int m = minutes - days * 24 * 60 - h * 60;
+        String sMinutes = String.format("%02d", m);
+        return Integer.toString(days) + ":" + sHours + ":" + sMinutes;
     }
 
     /**
@@ -2273,6 +2294,79 @@ public class TrainCommon {
     }
 
     private static int getLineLength(String orientation, String fontName, int fontStyle, int fontSize) {
+        Integer charsPerLine = InstanceManager.getDefault(TrainManager.class).getHardcopyWriterLineLength(fontName,
+                fontStyle, fontSize, getPageSize(orientation), orientation.equals(Setup.LANDSCAPE));
+        if (charsPerLine == null) {
+            // first try using hardcopywriter to get number of characters per line
+            charsPerLine = getCharsPerLineHardcopyWriter(orientation, fontName, fontStyle, fontSize);
+            if (charsPerLine == null) {
+                charsPerLine = getCharsPerLine(orientation, fontName, fontStyle, fontSize);
+            }
+            log.debug("Number of characters per line {}, fontName: {}, fontStyle {}, fontSize {}", charsPerLine,
+                    fontName,
+                    fontStyle, fontSize);
+            InstanceManager.getDefault(TrainManager.class).setHardcopyWriterLineLength(fontName,
+                    fontStyle, fontSize, getPageSize(orientation), orientation.equals(Setup.LANDSCAPE), charsPerLine);
+        }
+        return charsPerLine;
+    }
+
+    private static Integer getCharsPerLineHardcopyWriter(String orientation, String fontName, int fontStyle,
+            int fontSize) {
+        // get hand held or half page dimensions in DPI
+        Dimension pageSize = getFullPageSizeDPI(orientation);
+
+        double leftmargin = .5 * 72;
+        double rightmargin = .5 * 72;
+        double topmargin = .5 * 72;
+        double bottommargin = .5 * 72;
+
+        if (orientation.equals(Setup.RECEIPT)) {
+            leftmargin = .2 * 72;
+            rightmargin = .2 * 72;
+        }
+
+        Integer charsPerLine = null;
+        try (HardcopyWriter writer =
+                new HardcopyWriter(fontName, fontStyle, fontSize, leftmargin, rightmargin, topmargin,
+                        bottommargin, orientation.equals(Setup.LANDSCAPE),
+                        pageSize)) {
+
+            charsPerLine = writer.getCharactersPerLine();
+
+        } catch (HardcopyWriter.PrintCanceledException ex) {
+            log.debug("Print canceled");
+        }
+        log.debug("orientation: {}, fontName: {}, fontStyle: {}, fontSize {}, chars/line: {}", orientation, fontName,
+                fontStyle, fontSize, charsPerLine);
+        return charsPerLine;
+    }
+
+    /**
+     * Returns null if standard paper size, otherwise paper dimensions for hand
+     * held or half page in DPI.
+     * 
+     * @param orientation paper size
+     * @return null if landscape or portrait
+     */
+    public static Dimension getFullPageSizeDPI(String orientation) {
+        Dimension pageSize = null;
+        if (orientation.equals(Setup.HANDHELD) || orientation.equals(Setup.HALFPAGE)) {
+            // add margins to page size
+            pageSize = new Dimension((getPageSize(orientation).width + PAPER_MARGINS.width),
+                    (getPageSize(orientation).height + PAPER_MARGINS.height));
+        }
+        // 2.25 inch paper width
+        if (orientation.equals(Setup.RECEIPT)) {
+            // margins .1 inch width
+            pageSize = new Dimension((getPageSize(orientation).width + RECEIPT_MARGINS.width),
+                    (getPageSize(orientation).height + RECEIPT_MARGINS.height));
+        }
+        return pageSize;
+    }
+
+    // backup method for determining characters per line
+    private static int getCharsPerLine(String orientation, String fontName, int fontStyle, int fontSize) {
         Font font = new Font(fontName, fontStyle, fontSize); // NOI18N
         JLabel label = new JLabel();
         FontMetrics metrics = label.getFontMetrics(font);
@@ -2282,16 +2376,8 @@ public class TrainCommon {
             charwidth = fontSize / 2; // create a reasonable character width
         }
         // compute lines and columns within margins
-        int charLength = getPageSize(orientation).width / charwidth;
-        if (charLength % 2 != 0) {
-            charLength--; // make it even
-        }
-        return charLength;
-    }
-
-    private boolean checkStringLength(String string, boolean isManifest) {
-        return checkStringLength(string, isManifest ? Setup.getManifestOrientation() : Setup.getSwitchListOrientation(),
-                Setup.getFontName(), Setup.getManifestFontSize());
+        int charsPerLine = getPageSize(orientation).width / charwidth;
+        return charsPerLine;
     }
 
     /**
@@ -2299,36 +2385,31 @@ public class TrainCommon {
      *
      * @return false if string length is longer than page width.
      */
-    private boolean checkStringLength(String string, String orientation, String fontName, int fontSize) {
-        // ignore text color controls when determining line length
-        if (string.startsWith(TEXT_COLOR_START) && string.contains(TEXT_COLOR_DONE)) {
-            string = string.substring(string.indexOf(TEXT_COLOR_DONE) + 2);
-        }
-        if (string.contains(TEXT_COLOR_END)) {
-            string = string.substring(0, string.indexOf(TEXT_COLOR_END));
-        }
-        Font font = new Font(fontName, Font.PLAIN, fontSize); // NOI18N
-        JLabel label = new JLabel();
-        FontMetrics metrics = label.getFontMetrics(font);
-        int stringWidth = metrics.stringWidth(string);
-        return stringWidth <= getPageSize(orientation).width;
+    private boolean checkStringLength(String string, boolean isManifest) {
+        // ignore color and bold controls when determining line length
+        string = getOnlyText(string);
+        return string.length() <= getLineLength(isManifest);
     }
 
     protected static final Dimension PAPER_MARGINS = new Dimension(84, 72);
+    protected static final Dimension RECEIPT_MARGINS = new Dimension(28, 72);
 
-    protected static Dimension getPageSize(String orientation) {
+    public static Dimension getPageSize(String orientation) {
         // page size has been adjusted to account for margins of .5
-        // Dimension(84, 72)
+        // Dimension(72, 72) left & right, top & bottom margins
         Dimension pagesize = new Dimension(523, 720); // Portrait 8.5 x 11
-        // landscape has .65 margins
         if (orientation.equals(Setup.LANDSCAPE)) {
-            pagesize = new Dimension(702, 523); // 11 x 8.5
+            pagesize = new Dimension(720, 523); // 11 x 8.5
         }
         if (orientation.equals(Setup.HALFPAGE)) {
             pagesize = new Dimension(261, 720); // 4.25 x 11
         }
         if (orientation.equals(Setup.HANDHELD)) {
             pagesize = new Dimension(206, 720); // 3.25 x 11
+        }
+        if (orientation.equals(Setup.RECEIPT)) {
+            // page size has been adjusted to account for margins of .2
+            pagesize = new Dimension(136, 720); // 2.25 x 11 (58mm)
         }
         return pagesize;
     }
@@ -2370,11 +2451,24 @@ public class TrainCommon {
      * @return formated text with color modifiers
      */
     public static String formatColorString(String text, Color color) {
+        return formatColorString(text, color, false);
+    }
+
+    public static String formatColorString(String text, Color color, boolean isBold) {
         String s = text;
         if (!color.equals(Color.black)) {
             s = TEXT_COLOR_START + ColorUtil.colorToColorName(color) + TEXT_COLOR_DONE + text + TEXT_COLOR_END;
         }
+        if (isBold) {
+            s = TEXT_BOLD + s + TEXT_BOLD_END;
+        }
         return s;
+    }
+
+    public static String getOnlyText(String string) {
+        string = getTextColorString(string);
+        string = getTextBoldString(string);
+        return string;
     }
 
     /**
@@ -2383,11 +2477,11 @@ public class TrainCommon {
      * @param string the string with control characters
      * @return pure text
      */
-    public static String getTextColorString(String string) {
+    private static String getTextColorString(String string) {
         String text = string;
         if (string.contains(TEXT_COLOR_START)) {
             text = string.substring(0, string.indexOf(TEXT_COLOR_START)) +
-                    string.substring(string.indexOf(TEXT_COLOR_DONE) + 2);
+                    string.substring(string.indexOf(TEXT_COLOR_DONE) + TEXT_COLOR_DONE.length());
         }
         if (text.contains(TEXT_COLOR_END)) {
             text = text.substring(0, text.indexOf(TEXT_COLOR_END)) +
@@ -2401,13 +2495,34 @@ public class TrainCommon {
         if (string.contains(TEXT_COLOR_START)) {
             String c = string.substring(string.indexOf(TEXT_COLOR_START) + TEXT_COLOR_START.length());
             c = c.substring(0, c.indexOf("\""));
-            color = ColorUtil.stringToColor(c);
+            try {
+                color = ColorUtil.stringToColor(c);
+            } catch (IllegalArgumentException e) {
+                log.error("Exception when getting text color: {}", string, e);
+            }
         }
         return color;
     }
 
     public static String getTextColorName(String string) {
         return ColorUtil.colorToColorName(getTextColor(string));
+    }
+
+    public static String getTextBoldString(String string) {
+        String text = string;
+        if (string.contains(TEXT_BOLD)) {
+            text = text.substring(0, text.indexOf(TEXT_BOLD)) +
+                    string.substring(string.indexOf(TEXT_BOLD) + TEXT_BOLD.length());
+        }
+        if (text.contains(TEXT_BOLD_END)) {
+            text = text.substring(0, text.indexOf(TEXT_BOLD_END)) +
+                    string.substring(string.indexOf(TEXT_BOLD_END) + TEXT_BOLD_END.length());
+        }
+        return text;
+    }
+
+    public static boolean isTextBold(String string) {
+        return (string.contains(TEXT_BOLD));
     }
 
     private static final Logger log = LoggerFactory.getLogger(TrainCommon.class);
